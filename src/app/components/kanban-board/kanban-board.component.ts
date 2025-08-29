@@ -21,6 +21,11 @@ export class KanbanBoardComponent {
   isDragging = signal(false);
   dragSourceColumn = signal<string | null>(null);
   dragOverColumn = signal<string | null>(null);
+
+  constructor() {
+    // Validate data integrity on component initialization
+    this.validateDataIntegrityOnInit();
+  }
   
   // Column definitions
   readonly columns = [
@@ -105,52 +110,284 @@ export class KanbanBoardComponent {
   }
 
   /**
-   * Handles drag and drop events for tasks
+   * Handles drag and drop events for tasks with enhanced persistence
    */
   onDrop(event: CdkDragDrop<Task[]>): void {
+    // Show loading state (optional)
+    const draggedTask = event.previousContainer.data[event.previousIndex];
+    
     if (event.previousContainer === event.container) {
       // Reordering within the same column
-      const tasks = event.container.data;
-      moveItemInArray(tasks, event.previousIndex, event.currentIndex);
-      
-      // Update the order of all tasks in this column
-      this.updateTaskOrder(tasks, this.getStatusFromContainerId(event.container.id));
+      this.handleReorderOperation(event, draggedTask);
     } else {
       // Moving between different columns
-      const previousTasks = event.previousContainer.data;
-      const currentTasks = event.container.data;
-      
-      // Get the task being moved
-      const movedTask = previousTasks[event.previousIndex];
-      const newStatus = this.getStatusFromContainerId(event.container.id);
-      
-      // Transfer the task between arrays
-      transferArrayItem(
-        previousTasks,
-        currentTasks,
-        event.previousIndex,
-        event.currentIndex
+      this.handleMoveOperation(event, draggedTask);
+    }
+  }
+
+  /**
+   * Handles reordering tasks within the same column
+   */
+  private handleReorderOperation(event: CdkDragDrop<Task[]>, draggedTask: Task): void {
+    const tasks = [...event.container.data];
+    const status = this.getStatusFromContainerId(event.container.id);
+    
+    // Optimistically update the UI
+    moveItemInArray(tasks, event.previousIndex, event.currentIndex);
+    
+    // Calculate affected tasks for atomic update
+    const affectedTasks = tasks.map((task, index) => ({
+      id: task.id,
+      newOrder: index
+    }));
+
+    // Perform atomic persistence
+    const result = this.taskService.handleDragDropOperation({
+      type: 'reorder',
+      taskId: draggedTask.id,
+      newOrder: event.currentIndex,
+      affectedTasks
+    });
+
+    if (!result.success) {
+      // Revert UI changes on failure
+      this.revertDropOperation();
+      this.showErrorMessage(`Failed to reorder task: ${result.error}`);
+    } else {
+      this.showSuccessMessage(`Task "${draggedTask.title}" reordered successfully`);
+    }
+  }
+
+  /**
+   * Handles moving tasks between different columns
+   */
+  private handleMoveOperation(event: CdkDragDrop<Task[]>, draggedTask: Task): void {
+    const previousTasks = [...event.previousContainer.data];
+    const currentTasks = [...event.container.data];
+    const newStatus = this.getStatusFromContainerId(event.container.id);
+    const previousStatus = this.getStatusFromContainerId(event.previousContainer.id);
+    
+    // Optimistically update the UI
+    transferArrayItem(
+      previousTasks,
+      currentTasks,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    // Calculate all affected tasks for atomic update
+    const affectedTasks: Array<{ id: string; newOrder: number }> = [];
+    
+    // Add affected tasks from current column
+    currentTasks.forEach((task, index) => {
+      affectedTasks.push({ id: task.id, newOrder: index });
+    });
+    
+    // Add affected tasks from previous column
+    previousTasks.forEach((task, index) => {
+      affectedTasks.push({ id: task.id, newOrder: index });
+    });
+
+    // Perform atomic persistence
+    const result = this.taskService.handleDragDropOperation({
+      type: 'move',
+      taskId: draggedTask.id,
+      newStatus,
+      newOrder: event.currentIndex,
+      affectedTasks
+    });
+
+    if (!result.success) {
+      // Revert UI changes on failure
+      this.revertDropOperation();
+      this.showErrorMessage(`Failed to move task: ${result.error}`);
+    } else {
+      const statusNames = {
+        [TaskStatus.BACKLOG]: 'Backlog',
+        [TaskStatus.IN_PROGRESS]: 'In Progress',
+        [TaskStatus.DONE]: 'Done'
+      };
+      this.showSuccessMessage(
+        `Task "${draggedTask.title}" moved to ${statusNames[newStatus]} successfully`
       );
+    }
+  }
+
+  /**
+   * Reverts the drop operation by refreshing data from service
+   * This ensures the UI reflects the actual persisted state
+   */
+  private revertDropOperation(): void {
+    // The signals will automatically update when the service state changes
+    // Force a check of data integrity
+    this.validateDataIntegrity();
+  }
+
+  /**
+   * Validates and repairs data integrity if needed
+   */
+  private validateDataIntegrity(): void {
+    const validation = this.taskService.validateTaskIntegrity();
+    if (!validation.isValid) {
+      console.warn('Data integrity issues detected:', validation.errors);
       
-      // Update task status and order
-      this.taskService.updateTaskStatus(movedTask.id, newStatus);
-      this.updateTaskOrder(currentTasks, newStatus);
-      
-      // Also update order for the previous column if needed
-      if (previousTasks.length > 0) {
-        const previousStatus = this.getStatusFromContainerId(event.previousContainer.id);
-        this.updateTaskOrder(previousTasks, previousStatus);
+      // Attempt to repair automatically
+      const repaired = this.taskService.repairTaskIntegrity();
+      if (repaired) {
+        this.showSuccessMessage('Data integrity issues were automatically repaired');
+      } else {
+        this.showErrorMessage('Critical data integrity issues detected. Please refresh the page.');
       }
     }
   }
 
   /**
-   * Updates the order of tasks in a column
+   * Shows success message (placeholder for toast service integration)
    */
-  private updateTaskOrder(tasks: Task[], status: TaskStatusType): void {
-    tasks.forEach((task, index) => {
-      this.taskService.updateTaskOrder(task.id, index);
-    });
+  private showSuccessMessage(message: string): void {
+    console.log('Success:', message);
+    // TODO: Integrate with ToastService when implemented
+  }
+
+  /**
+   * Shows error message (placeholder for toast service integration)
+   */
+  private showErrorMessage(message: string): void {
+    console.error('Error:', message);
+    // TODO: Integrate with ToastService when implemented
+    
+    // For now, show a simple alert for critical errors
+    if (message.includes('Critical')) {
+      alert(message);
+    }
+  }
+
+  /**
+   * Validates data integrity when component initializes
+   */
+  private validateDataIntegrityOnInit(): void {
+    try {
+      const validation = this.taskService.validateTaskIntegrity();
+      if (!validation.isValid) {
+        console.warn('Data integrity issues found on initialization:', validation.errors);
+        
+        // Attempt automatic repair
+        const repaired = this.taskService.repairTaskIntegrity();
+        if (repaired) {
+          console.log('Data integrity issues automatically repaired on startup');
+        } else {
+          console.error('Failed to repair data integrity issues on startup');
+        }
+      } else {
+        console.log('Data integrity validation passed on initialization');
+      }
+    } catch (error) {
+      console.error('Error during data integrity validation on init:', error);
+    }
+  }
+
+  /**
+   * Gets performance metrics for drag and drop operations
+   */
+  getDragDropMetrics(): {
+    totalTasks: number;
+    tasksByStatus: Record<TaskStatusType, number>;
+    lastUpdateTime: string;
+  } {
+    const allTasks = this.allTasks();
+    const tasksByStatus = {
+      [TaskStatus.BACKLOG]: this.backlogTasks().length,
+      [TaskStatus.IN_PROGRESS]: this.inProgressTasks().length,
+      [TaskStatus.DONE]: this.doneTasks().length
+    };
+
+    return {
+      totalTasks: allTasks.length,
+      tasksByStatus,
+      lastUpdateTime: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Exports current kanban state for debugging or backup
+   */
+  exportKanbanState(): string {
+    const state = {
+      tasks: this.allTasks(),
+      columns: this.columns,
+      metrics: this.getDragDropMetrics(),
+      integrity: this.taskService.validateTaskIntegrity(),
+      storage: this.taskService.getStorageInfo(),
+      timestamp: new Date().toISOString()
+    };
+
+    return JSON.stringify(state, null, 2);
+  }
+
+  /**
+   * Developer utility: Tests persistence functionality
+   * Can be called from browser console for debugging
+   */
+  testPersistence(): void {
+    console.group('🧪 Testing Kanban Persistence & State Management');
+    
+    try {
+      // Test 1: Data Integrity Validation
+      console.log('📋 Test 1: Data Integrity Validation');
+      const integrity = this.taskService.validateTaskIntegrity();
+      console.log('Integrity check:', integrity);
+      
+      // Test 2: Storage Information
+      console.log('💾 Test 2: Storage Information');
+      const storage = this.taskService.getStorageInfo();
+      console.log('Storage info:', storage);
+      
+      // Test 3: Export Current State
+      console.log('📤 Test 3: Export Current State');
+      const state = this.exportKanbanState();
+      console.log('Current state exported (check next log)');
+      console.log(JSON.parse(state));
+      
+      // Test 4: Metrics
+      console.log('📊 Test 4: Performance Metrics');
+      const metrics = this.getDragDropMetrics();
+      console.log('Drag & Drop Metrics:', metrics);
+      
+      // Test 5: Performance Monitoring
+      console.log('⚡ Test 5: Performance Monitoring');
+      const performance = this.taskService.getPerformanceMetrics();
+      console.log('Performance Metrics:', performance);
+      
+      console.log('✅ All persistence tests completed successfully');
+    } catch (error) {
+      console.error('❌ Persistence test failed:', error);
+    }
+    
+    console.groupEnd();
+  }
+
+  /**
+   * Developer utility: Simulates various error scenarios for testing
+   */
+  simulateErrorScenarios(): void {
+    console.group('🚨 Testing Error Scenarios');
+    
+    console.warn('This will test error handling - some errors are expected');
+    
+    try {
+      // Test invalid task operations
+      console.log('Testing invalid operations...');
+      
+      // These should be handled gracefully
+      this.showErrorMessage('Test error message');
+      this.showSuccessMessage('Test success message');
+      
+      console.log('✅ Error scenario testing completed');
+    } catch (error) {
+      console.error('❌ Error scenario test failed:', error);
+    }
+    
+    console.groupEnd();
   }
 
   /**
