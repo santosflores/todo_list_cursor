@@ -377,8 +377,9 @@ export class TaskEditModalComponent {
    */
   onTitleChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.formTitle.set(value);
+    // Update both formData and signal
     this.formData.title = value;
+    this.formTitle.set(value);
     this.updateValidationErrors();
   }
 
@@ -387,8 +388,9 @@ export class TaskEditModalComponent {
    */
   onDescriptionChange(event: Event): void {
     const value = (event.target as HTMLTextAreaElement).value;
-    this.formDescription.set(value);
+    // Update both formData and signal
     this.formData.description = value;
+    this.formDescription.set(value);
     this.updateValidationErrors();
   }
 
@@ -397,8 +399,9 @@ export class TaskEditModalComponent {
    */
   onStatusChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as TaskStatusType;
-    this.formStatus.set(value);
+    // Update both formData and signal
     this.formData.status = value;
+    this.formStatus.set(value);
   }
 
   constructor(private cdr: ChangeDetectorRef) {
@@ -430,36 +433,40 @@ export class TaskEditModalComponent {
       const description = currentTask.description || '';
       const status = currentTask.status;
       
+      // Update both formData and signals
+      this.formData.title = title;
+      this.formData.description = description;
+      this.formData.status = status;
+      
       this.formTitle.set(title);
       this.formDescription.set(description);
       this.formStatus.set(status);
       
-      this.formData = {
-        title: title,
-        description: description,
-        status: status
-      };
-      
       console.log('TaskEditModal: Form data set for editing:', { 
-        title: this.formTitle(), 
-        description: this.formDescription(), 
-        status: this.formStatus() 
+        formData: this.formData,
+        signals: {
+          title: this.formTitle(), 
+          description: this.formDescription(), 
+          status: this.formStatus() 
+        }
       });
     } else {
+      // Update both formData and signals
+      this.formData.title = '';
+      this.formData.description = '';
+      this.formData.status = 'backlog';
+      
       this.formTitle.set('');
       this.formDescription.set('');
       this.formStatus.set('backlog');
       
-      this.formData = {
-        title: '',
-        description: '',
-        status: 'backlog'
-      };
-      
       console.log('TaskEditModal: Form data set for creating:', { 
-        title: this.formTitle(), 
-        description: this.formDescription(), 
-        status: this.formStatus() 
+        formData: this.formData,
+        signals: {
+          title: this.formTitle(), 
+          description: this.formDescription(), 
+          status: this.formStatus() 
+        }
       });
     }
     this.clearValidationErrors();
@@ -501,7 +508,13 @@ export class TaskEditModalComponent {
    * Handles form submission
    */
   onSave(): void {
-    console.log('TaskEditModal: onSave called, formData:', {
+    console.log('TaskEditModal: onSave called');
+    console.log('TaskEditModal: formData (actual form values):', {
+      title: this.formData.title,
+      description: this.formData.description,
+      status: this.formData.status
+    });
+    console.log('TaskEditModal: signals:', {
       title: this.formTitle(),
       description: this.formDescription(),
       status: this.formStatus()
@@ -515,9 +528,9 @@ export class TaskEditModalComponent {
     }
 
     const updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> = {
-      title: this.formTitle().trim(),
-      description: this.formDescription().trim() || undefined,
-      status: this.formStatus()
+      title: this.formData.title.trim(),
+      description: this.formData.description.trim() || undefined,
+      status: this.formData.status
     };
 
     console.log('TaskEditModal: Emitting save event with updates:', updates);
