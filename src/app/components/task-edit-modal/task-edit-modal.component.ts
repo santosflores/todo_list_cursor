@@ -109,7 +109,7 @@ import { TaskStatusType } from '../../models/task-status.model';
               <button
                 type="submit"
                 class="btn btn-primary"
-                [disabled]="!isFormValid()"
+                [disabled]="!isFormValid"
               >
                 {{ buttonText() }}
               </button>
@@ -353,6 +353,17 @@ export class TaskEditModalComponent {
   titleError = computed(() => this.validationErrors().title);
   descriptionError = computed(() => this.validationErrors().description);
 
+  // Computed form validation
+  isFormValid = computed(() => {
+    const title = this.formTitle().trim();
+    const description = this.formDescription();
+    
+    const titleValid = title.length > 0 && title.length <= 128;
+    const descriptionValid = description.length <= 256;
+    
+    return titleValid && descriptionValid;
+  });
+
   // Computed button text
   buttonText = computed(() => {
     const task = this.task();
@@ -368,7 +379,7 @@ export class TaskEditModalComponent {
     const value = (event.target as HTMLInputElement).value;
     this.formTitle.set(value);
     this.formData.title = value;
-    this.validateFormRealTime();
+    this.updateValidationErrors();
   }
 
   /**
@@ -378,7 +389,7 @@ export class TaskEditModalComponent {
     const value = (event.target as HTMLTextAreaElement).value;
     this.formDescription.set(value);
     this.formData.description = value;
-    this.validateFormRealTime();
+    this.updateValidationErrors();
   }
 
   /**
@@ -455,36 +466,28 @@ export class TaskEditModalComponent {
   }
 
   /**
-   * Validates the form in real-time as user types
+   * Updates validation errors based on current form data
    */
-  validateFormRealTime(): void {
+  private updateValidationErrors(): void {
     // Use a small timeout to debounce validation
     setTimeout(() => {
-      this.isFormValid();
+      const errors: { title?: string; description?: string } = {};
+
+      // Validate title
+      const title = this.formTitle().trim();
+      if (!title) {
+        errors.title = 'Task title is required';
+      } else if (title.length > 128) {
+        errors.title = 'Title cannot exceed 128 characters';
+      }
+
+      // Validate description
+      if (this.formDescription().length > 256) {
+        errors.description = 'Description cannot exceed 256 characters';
+      }
+
+      this.validationErrors.set(errors);
     }, 50);
-  }
-
-  /**
-   * Validates the form and returns whether it's valid
-   */
-  isFormValid(): boolean {
-    const errors: { title?: string; description?: string } = {};
-
-    // Validate title
-    const title = this.formTitle().trim();
-    if (!title) {
-      errors.title = 'Task title is required';
-    } else if (title.length > 128) {
-      errors.title = 'Title cannot exceed 128 characters';
-    }
-
-    // Validate description
-    if (this.formDescription().length > 256) {
-      errors.description = 'Description cannot exceed 256 characters';
-    }
-
-    this.validationErrors.set(errors);
-    return Object.keys(errors).length === 0;
   }
 
   /**
@@ -504,7 +507,7 @@ export class TaskEditModalComponent {
       status: this.formStatus()
     });
 
-    if (!this.isFormValid()) {
+    if (!this.isFormValid) {
       console.log('TaskEditModal: Form validation failed');
       return;
     }
