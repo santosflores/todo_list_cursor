@@ -1,3 +1,5 @@
+# Tasks
+
 ## Relevant Files
 
 - `src/app/app.component.ts` - Main app shell component orchestrating the overall application.
@@ -23,7 +25,7 @@
 - Use `ng test` to run all tests or `ng test --include="**/specific.component.spec.ts"` for specific test files.
 - Use `ng serve` to run the development server.
 
-## Tasks
+## Task List
 
 - [ ] 1.0 Project Setup and Configuration
 - [ ] 2.0 Core Data Models and Services

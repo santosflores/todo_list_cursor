@@ -31,6 +31,7 @@ The Daily Task Management App is a modern, web-based todo list application desig
 ## Functional Requirements
 
 ### Core Task Management
+
 1. The system must allow users to create new tasks with a required title (max 128 characters) and optional description (max 256 characters).
 2. The system must display tasks in three distinct columns: Backlog, In Progress, and Done.
 3. The system must allow users to drag and drop tasks between any of the three columns.
@@ -40,17 +41,20 @@ The Daily Task Management App is a modern, web-based todo list application desig
 7. The system must display the creation date/time for each task.
 
 ### Data Persistence
+
 8. The system must save all task data to browser localStorage automatically.
 9. The system must load previously saved tasks when the application starts.
 10. The system must persist task order and column positions between sessions.
 
 ### User Interface
+
 11. The system must use a card-based design with clear borders and subtle shadows for task display.
 12. The system must provide a modern, clean visual design optimized for desktop browsers.
 13. The system must show simple toast notifications for errors and important actions.
 14. The system must provide confirmation dialogs for delete operations and major task movements.
 
 ### Validation & Error Handling
+
 15. The system must enforce the 128-character limit for task titles.
 16. The system must enforce the 256-character limit for task descriptions.
 17. The system must require a title before allowing task creation.
@@ -72,6 +76,7 @@ The Daily Task Management App is a modern, web-based todo list application desig
 ## Design Considerations
 
 ### Visual Design
+
 - **Layout:** Three-column layout with equal width columns
 - **Cards:** Task cards with clear borders, subtle shadows, and rounded corners
 - **Typography:** Clean, readable fonts with appropriate hierarchy
@@ -79,12 +84,14 @@ The Daily Task Management App is a modern, web-based todo list application desig
 - **Spacing:** Generous white space for clean appearance
 
 ### Interaction Design
+
 - **Drag & Drop:** Smooth animations during task movement
 - **Hover States:** Clear visual feedback on interactive elements
 - **Modal Design:** Clean, centered modals for detailed task editing
 - **Toast Notifications:** Non-intrusive, auto-dismissing messages
 
 ### Component Structure
+
 - Header with application title and "Add Task" button
 - Three-column main layout (Backlog | In Progress | Done)
 - Task card component with inline editing capabilities
@@ -94,24 +101,27 @@ The Daily Task Management App is a modern, web-based todo list application desig
 ## Technical Considerations
 
 ### Framework & Technology
+
 - **Frontend:** Angular (latest stable version)
 - **Storage:** Browser localStorage API
 - **Drag & Drop:** Angular CDK drag-and-drop module
 - **Styling:** Angular Material or custom CSS with modern design principles
 
 ### Data Structure
+
 ```typescript
 interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'backlog' | 'in-progress' | 'done';
+  status: "backlog" | "in-progress" | "done";
   createdAt: Date;
   order: number;
 }
 ```
 
 ### Key Components
+
 - AppComponent (main shell)
 - KanbanBoardComponent (three-column layout)
 - TaskCardComponent (individual task display)
@@ -137,18 +147,21 @@ interface Task {
 ## Implementation Priority
 
 ### Phase 1 (MVP)
+
 - Basic three-column layout
 - Task creation with title/description
 - Drag and drop between columns
 - localStorage persistence
 
 ### Phase 2 (Enhanced UX)
+
 - Inline and modal editing
 - Creation timestamps
 - Confirmation dialogs
 - Toast notifications
 
 ### Phase 3 (Polish)
+
 - Final visual design refinements
 - Performance optimizations
 - Edge case handling
