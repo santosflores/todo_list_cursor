@@ -47,8 +47,8 @@ import { TaskStatusType } from '../../models/task-status.model';
                 id="task-title"
                 type="text"
                 class="form-input"
-                [ngModel]="formData.title"
-                (input)="validateFormRealTime()"
+                [(ngModel)]="formData.title"
+                (input)="updateValidationErrors()"
                 name="title"
                 required
                 maxlength="128"
@@ -70,7 +70,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 id="task-description"
                 class="form-textarea"
                 [(ngModel)]="formData.description"
-                (input)="validateFormRealTime()"
+                (input)="updateValidationErrors()"
                 name="description"
                 maxlength="256"
                 placeholder="Enter task description..."
@@ -83,21 +83,19 @@ import { TaskStatusType } from '../../models/task-status.model';
               }
             </div>
 
-            @if (task()) {
-              <div class="form-group">
-                <label for="task-status" class="form-label">Status</label>
-                <select
+            <div class="form-group">
+              <label for="task-status" class="form-label">Status</label>
+                              <select
                   id="task-status"
                   class="form-select"
                   [(ngModel)]="formData.status"
                   name="status"
                 >
-                  <option value="backlog">Backlog</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
-              </div>
-            }
+                <option value="backlog">Backlog</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
 
             <div class="form-actions">
               <button
@@ -349,6 +347,17 @@ export class TaskEditModalComponent {
   titleError = computed(() => this.validationErrors().title);
   descriptionError = computed(() => this.validationErrors().description);
 
+  // Computed form validation
+  isFormValid = computed(() => {
+    const title = this.formData.title.trim();
+    const description = this.formData.description;
+    
+    const titleValid = title.length > 0 && title.length <= 128;
+    const descriptionValid = description.length <= 256;
+    
+    return titleValid && descriptionValid;
+  });
+
   // Computed button text
   buttonText = computed(() => {
     const task = this.task();
@@ -356,6 +365,8 @@ export class TaskEditModalComponent {
     console.log('TaskEditModal: Button text computed - task:', task, 'text:', text);
     return text;
   });
+
+
 
   constructor(private cdr: ChangeDetectorRef) {
     // Initialize form when modal opens or task changes
@@ -400,36 +411,28 @@ export class TaskEditModalComponent {
   }
 
   /**
-   * Validates the form in real-time as user types
+   * Updates validation errors based on current form data
    */
-  validateFormRealTime(): void {
+  updateValidationErrors(): void {
     // Use a small timeout to debounce validation
     setTimeout(() => {
-      this.isFormValid();
+      const errors: { title?: string; description?: string } = {};
+
+      // Validate title
+      const title = this.formData.title.trim();
+      if (!title) {
+        errors.title = 'Task title is required';
+      } else if (title.length > 128) {
+        errors.title = 'Title cannot exceed 128 characters';
+      }
+
+      // Validate description
+      if (this.formData.description.length > 256) {
+        errors.description = 'Description cannot exceed 256 characters';
+      }
+
+      this.validationErrors.set(errors);
     }, 50);
-  }
-
-  /**
-   * Validates the form and returns whether it's valid
-   */
-  isFormValid(): boolean {
-    const errors: { title?: string; description?: string } = {};
-
-    // Validate title
-    const title = this.formData.title.trim();
-    if (!title) {
-      errors.title = 'Task title is required';
-    } else if (title.length > 128) {
-      errors.title = 'Title cannot exceed 128 characters';
-    }
-
-    // Validate description
-    if (this.formData.description.length > 256) {
-      errors.description = 'Description cannot exceed 256 characters';
-    }
-
-    this.validationErrors.set(errors);
-    return Object.keys(errors).length === 0;
   }
 
   /**
@@ -443,16 +446,22 @@ export class TaskEditModalComponent {
    * Handles form submission
    */
   onSave(): void {
-    console.log('TaskEditModal: onSave called, formData:', this.formData);
+    console.log('TaskEditModal: onSave called');
+    console.log('TaskEditModal: formData:', this.formData);
+    console.log('TaskEditModal: isFormValid result:', this.isFormValid());
+    console.log('TaskEditModal: current task:', this.task());
 
     if (!this.isFormValid()) {
       console.log('TaskEditModal: Form validation failed');
       return;
     }
 
+    const trimmedTitle = this.formData.title.trim();
+    const trimmedDescription = this.formData.description.trim();
+
     const updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> = {
-      title: this.formData.title.trim(),
-      description: this.formData.description.trim() || undefined,
+      title: trimmedTitle,
+      description: trimmedDescription || undefined,
       status: this.formData.status
     };
 

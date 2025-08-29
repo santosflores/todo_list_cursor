@@ -229,6 +229,7 @@ export class KanbanBoardComponent {
    * Closes the edit modal
    */
   closeEditModal(): void {
+    console.log('KanbanBoard: Closing edit modal');
     this.isModalOpen.set(false);
     this.editingTask.set(null);
   }
@@ -272,10 +273,13 @@ export class KanbanBoardComponent {
    * Handles saving from the modal (both create and edit)
    */
   onModalSave(event: { task: Task | null; updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> }): void {
+    console.log('KanbanBoard: onModalSave called with event:', event);
     try {
       if (event.task) {
         // Editing existing task
+        console.log('KanbanBoard: Updating existing task:', event.task.id, 'with updates:', event.updates);
         const updatedTask = this.taskService.updateTask(event.task.id, event.updates);
+        console.log('KanbanBoard: Task updated successfully:', updatedTask);
         this.toastService.showSuccess(`Task "${updatedTask.title}" updated successfully`);
       } else {
         // Creating new task
@@ -284,15 +288,18 @@ export class KanbanBoardComponent {
           return;
         }
         
+        console.log('KanbanBoard: Creating new task with title:', event.updates.title);
         const newTask = this.taskService.createTask(
           event.updates.title!,
           event.updates.description
         );
+        console.log('KanbanBoard: Task created successfully:', newTask);
         this.toastService.showSuccess(`Task "${newTask.title}" created successfully!`);
       }
       
       this.closeEditModal();
     } catch (error) {
+      console.error('KanbanBoard: Error in onModalSave:', error);
       this.errorHandler.handleError(error, 'modal save');
     }
   }
