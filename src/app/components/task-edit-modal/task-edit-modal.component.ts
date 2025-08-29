@@ -6,6 +6,7 @@ import {
   signal,
   computed,
   effect,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -46,7 +47,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 id="task-title"
                 type="text"
                 class="form-input"
-                [(ngModel)]="formData.title"
+                [ngModel]="formData.title"
                 (input)="validateFormRealTime()"
                 name="title"
                 required
@@ -111,7 +112,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 class="btn btn-primary"
                 [disabled]="!isFormValid()"
               >
-                {{ task() ? 'Update Task' : 'Create Task' }}
+                {{ buttonText() }}
               </button>
             </div>
           </form>
@@ -348,11 +349,27 @@ export class TaskEditModalComponent {
   titleError = computed(() => this.validationErrors().title);
   descriptionError = computed(() => this.validationErrors().description);
 
-  constructor() {
+  // Computed button text
+  buttonText = computed(() => {
+    const task = this.task();
+    const text = task ? 'Update Task' : 'Create Task';
+    console.log('TaskEditModal: Button text computed - task:', task, 'text:', text);
+    return text;
+  });
+
+  constructor(private cdr: ChangeDetectorRef) {
     // Initialize form when modal opens or task changes
     effect(() => {
-      if (this.isOpen()) {
+      const isOpen = this.isOpen();
+      const task = this.task();
+      console.log('TaskEditModal: Effect triggered - isOpen:', isOpen, 'task:', task);
+
+      if (isOpen) {
+        console.log('TaskEditModal: Modal is open, initializing form...');
         this.initializeForm();
+        this.cdr.detectChanges();
+      } else {
+        console.log('TaskEditModal: Modal is closed');
       }
     });
   }
@@ -362,18 +379,22 @@ export class TaskEditModalComponent {
    */
   private initializeForm(): void {
     const currentTask = this.task();
+    console.log('TaskEditModal: Initializing form with task:', currentTask);
+
     if (currentTask) {
       this.formData = {
         title: currentTask.title,
         description: currentTask.description || '',
         status: currentTask.status
       };
+      console.log('TaskEditModal: Form data set for editing:', this.formData);
     } else {
       this.formData = {
         title: '',
         description: '',
         status: 'backlog'
       };
+      console.log('TaskEditModal: Form data set for creating:', this.formData);
     }
     this.clearValidationErrors();
   }
@@ -422,7 +443,10 @@ export class TaskEditModalComponent {
    * Handles form submission
    */
   onSave(): void {
+    console.log('TaskEditModal: onSave called, formData:', this.formData);
+
     if (!this.isFormValid()) {
+      console.log('TaskEditModal: Form validation failed');
       return;
     }
 
@@ -432,6 +456,7 @@ export class TaskEditModalComponent {
       status: this.formData.status
     };
 
+    console.log('TaskEditModal: Emitting save event with updates:', updates);
     this.save.emit({
       task: this.task(),
       updates
