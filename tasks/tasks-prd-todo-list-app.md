@@ -56,15 +56,15 @@
   - [x] 3.5 Implement basic task list rendering
   - [x] 3.6 Add task CRUD operation tests
 
-- [ ] 4.0 Kanban Board Layout and Drag-and-Drop
+- [x] 4.0 Kanban Board Layout and Drag-and-Drop
 
-  - [ ] 4.1 Create KanbanBoardComponent with three-column layout
-  - [ ] 4.2 Implement Angular CDK drag-and-drop functionality
-  - [ ] 4.3 Enable drag-and-drop between columns (status changes)
-  - [ ] 4.4 Enable drag-and-drop within columns (reordering)
-  - [ ] 4.5 Add visual feedback during drag operations
-  - [ ] 4.6 Handle drag-and-drop persistence and state management
-  - [ ] 4.7 Test drag-and-drop functionality across all scenarios
+  - [x] 4.1 Create KanbanBoardComponent with three-column layout
+  - [x] 4.2 Implement Angular CDK drag-and-drop functionality
+  - [x] 4.3 Enable drag-and-drop between columns (status changes)
+  - [x] 4.4 Enable drag-and-drop within columns (reordering)
+  - [x] 4.5 Add visual feedback during drag operations
+  - [x] 4.6 Handle drag-and-drop persistence and state management
+  - [x] 4.7 Test drag-and-drop functionality across all scenarios
 
 - [ ] 5.0 Task Editing and Modal Interface
 
