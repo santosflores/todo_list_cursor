@@ -47,14 +47,14 @@
   - [x] 2.5 Implement ToastService for notifications
   - [x] 2.6 Create service unit tests
 
-- [ ] 3.0 Basic Task Management Functionality
+- [x] 3.0 Basic Task Management Functionality
 
-  - [ ] 3.1 Create TaskCardComponent with display logic
-  - [ ] 3.2 Implement task creation form with title and description fields
-  - [ ] 3.3 Add task deletion with confirmation dialog
-  - [ ] 3.4 Display task creation timestamps
-  - [ ] 3.5 Implement basic task list rendering
-  - [ ] 3.6 Add task CRUD operation tests
+  - [x] 3.1 Create TaskCardComponent with display logic
+  - [x] 3.2 Implement task creation form with title and description fields
+  - [x] 3.3 Add task deletion with confirmation dialog
+  - [x] 3.4 Display task creation timestamps
+  - [x] 3.5 Implement basic task list rendering
+  - [x] 3.6 Add task CRUD operation tests
 
 - [ ] 4.0 Kanban Board Layout and Drag-and-Drop
 
