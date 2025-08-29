@@ -3,12 +3,14 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { TaskService } from './services/task.service';
+import { ToastService } from './services/toast.service';
 import { KanbanBoardComponent } from './components/kanban-board/kanban-board.component';
+import { ToastComponent } from './components/toast/toast.component';
 import { Task } from './models/task.model';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, ReactiveFormsModule, KanbanBoardComponent],
+  imports: [RouterOutlet, CommonModule, ReactiveFormsModule, KanbanBoardComponent, ToastComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -18,6 +20,7 @@ export class AppComponent {
   
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
+  private toastService = inject(ToastService);
   
   // Form for creating new tasks
   taskForm: FormGroup;
@@ -30,6 +33,11 @@ export class AppComponent {
       title: ['', [Validators.required, Validators.maxLength(128)]],
       description: ['', [Validators.maxLength(256)]]
     });
+    
+    // Show welcome toast notification
+    setTimeout(() => {
+      this.toastService.showInfo('Welcome to your daily task manager!', 4000);
+    }, 1000);
   }
   
   /**
@@ -56,9 +64,10 @@ export class AppComponent {
       try {
         this.taskService.createTask(title, description);
         this.hideTaskForm();
+        this.toastService.showSuccess(`Task "${title}" created successfully!`);
       } catch (error) {
         console.error('Error creating task:', error);
-        // TODO: Show toast notification for error
+        this.toastService.showError('Failed to create task. Please try again.');
       }
     }
   }

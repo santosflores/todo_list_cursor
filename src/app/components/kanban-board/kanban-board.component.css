@@ -58,7 +58,24 @@
     0 2px 6px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0; /* Allow columns to shrink if needed */
+  animation: column-slide-in 0.6s ease-out both;
 }
+
+@keyframes column-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered column animations */
+.kanban-column:nth-child(1) { animation-delay: 0.1s; }
+.kanban-column:nth-child(2) { animation-delay: 0.2s; }
+.kanban-column:nth-child(3) { animation-delay: 0.3s; }
 
 .column-header {
   padding: 1.5rem 1.5rem 1rem 1.5rem;
@@ -77,6 +94,12 @@
   font-weight: 700;
   color: #2d3748;
   letter-spacing: -0.02em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.column-header:hover .column-title {
+  color: #1a202c;
+  transform: translateX(2px);
 }
 
 .task-count {
@@ -90,19 +113,40 @@
   text-align: center;
   box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: badge-pulse 3s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { 
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 3px 8px rgba(108, 117, 125, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.task-count:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(108, 117, 125, 0.4);
 }
 
 .column-description {
-  padding: 0 1rem 1rem 1rem;
+  padding: 0 1.5rem 1.25rem 1.5rem;
   margin: 0;
   font-size: 0.875rem;
-  color: #6c757d;
-  background-color: white;
+  font-weight: 500;
+  color: #718096;
+  background-color: transparent;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
 }
 
 .column-content {
   flex: 1;
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   overflow-y: auto;
 }
 
@@ -123,18 +167,47 @@
 .task-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+/* Staggered task animations */
+.task-item {
+  animation: task-slide-in 0.5s ease-out;
+}
+
+@keyframes task-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .empty-column {
   text-align: center;
-  padding: 2rem 1rem;
-  color: #6c757d;
+  padding: 3rem 1.5rem;
+  color: #a0aec0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  border: 2px dashed transparent;
+}
+
+.empty-column:hover {
+  color: #718096;
+  background: rgba(0, 123, 255, 0.02);
+  border-color: rgba(0, 123, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .empty-column p {
   margin: 0;
   font-style: italic;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 /* Desktop Responsive Design */
@@ -231,13 +304,14 @@
 /* Drag and Drop Styles */
 .task-item {
   cursor: grab;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .task-item:hover:not(.cdk-drag-dragging) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  z-index: 10;
 }
 
 .task-item:active {
