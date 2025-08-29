@@ -14,7 +14,7 @@ export class TaskService {
   private readonly PERFORMANCE_KEY = 'daily-tasks-performance';
   private readonly VERSION_KEY = 'daily-tasks-version';
   private readonly CURRENT_VERSION = '1.0.0';
-  
+
   private errorHandler = inject(ErrorHandlerService);
 
   // Signal for all tasks
@@ -55,7 +55,7 @@ export class TaskService {
     this.validateAndRepairOnInit();
     this.setupEventListeners();
   }
-  
+
   /**
    * Sets up event listeners for error recovery actions
    */
@@ -71,7 +71,7 @@ export class TaskService {
   private handleDataMigration(): void {
     try {
       const currentVersion = localStorage.getItem(this.VERSION_KEY);
-      
+
       if (!currentVersion) {
         // First time user or legacy data without version
         this.migrateLegacyData();
@@ -105,11 +105,11 @@ export class TaskService {
       }
 
       const data = JSON.parse(stored);
-      
+
       // Check if this looks like legacy task data (array of tasks without version wrapper)
       if (Array.isArray(data) && data.length > 0 && data[0].id) {
         console.log('TaskService: Detected legacy task data, performing migration');
-        
+
         // Validate and clean up legacy data
         const migratedTasks = data.map((task: any, index: number) => ({
           id: task.id || `migrated_task_${Date.now()}_${index}`,
@@ -125,7 +125,7 @@ export class TaskService {
           ...task,
           createdAt: task.createdAt.toISOString()
         }))));
-        
+
         console.log(`TaskService: Successfully migrated ${migratedTasks.length} legacy tasks`);
       }
     } catch (error) {
@@ -140,7 +140,7 @@ export class TaskService {
    */
   private migrateData(fromVersion: string, toVersion: string): void {
     const migrations = this.getMigrationPath(fromVersion, toVersion);
-    
+
     for (const migration of migrations) {
       try {
         migration.migrate();
@@ -168,7 +168,7 @@ export class TaskService {
       // }
     ];
 
-    return migrations.filter(migration => 
+    return migrations.filter(migration =>
       this.compareVersions(migration.version, fromVersion) > 0 &&
       this.compareVersions(migration.version, toVersion) <= 0
     );
@@ -181,15 +181,15 @@ export class TaskService {
   private compareVersions(a: string, b: string): number {
     const aParts = a.split('.').map(Number);
     const bParts = b.split('.').map(Number);
-    
+
     for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
       const aPart = aParts[i] || 0;
       const bPart = bParts[i] || 0;
-      
+
       if (aPart < bPart) return -1;
       if (aPart > bPart) return 1;
     }
-    
+
     return 0;
   }
 
@@ -216,12 +216,12 @@ export class TaskService {
           return TaskStatus.DONE;
       }
     }
-    
+
     // Check if it's already a valid TaskStatus enum value
     if (Object.values(TaskStatus).includes(status as TaskStatus)) {
       return status as TaskStatus;
     }
-    
+
     return null;
   }
 
@@ -234,7 +234,7 @@ export class TaskService {
     if (!stored) return;
 
     const tasks = JSON.parse(stored);
-    
+
     // Example: Add new field to existing tasks
     const migratedTasks = tasks.map((task: any) => ({
       ...task,
@@ -255,7 +255,7 @@ export class TaskService {
     migrationHistory: string[];
   } {
     const storedVersion = localStorage.getItem(this.VERSION_KEY);
-    
+
     // For now, migration history is simple, but could be expanded
     const migrationHistory: string[] = [];
     if (storedVersion && storedVersion !== this.CURRENT_VERSION) {
@@ -328,7 +328,7 @@ export class TaskService {
     this._tasks.update(tasks =>
       tasks.map(t =>
         t.id === id
-          ? { ...t, ...updates, title: updates.title?.trim() || t.title, description: updates.description?.trim() }
+          ? { ...t, ...updates, title: updates.title !== undefined ? updates.title.trim() : t.title, description: updates.description !== undefined ? updates.description.trim() : t.description }
           : t
       )
     );
@@ -635,8 +635,8 @@ export class TaskService {
             updatedTasks[taskIndex] = {
               ...updatedTasks[taskIndex],
               ...update.updates,
-              title: update.updates.title?.trim() || updatedTasks[taskIndex].title,
-              description: update.updates.description?.trim()
+              title: update.updates.title !== undefined ? update.updates.title.trim() : updatedTasks[taskIndex].title,
+              description: update.updates.description !== undefined ? update.updates.description.trim() : updatedTasks[taskIndex].description
             };
           }
         });
@@ -784,26 +784,26 @@ export class TaskService {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-      
+
       const currentTasks = this._tasks();
       const tasksToKeep = currentTasks.filter(task => {
         // Keep task if it's not done, or if it's done but not old enough
         return task.status !== TaskStatus.DONE || task.createdAt > cutoffDate;
       });
-      
+
       const removedCount = currentTasks.length - tasksToKeep.length;
       const currentSize = JSON.stringify(currentTasks).length * 2; // UTF-16 encoding
       const newSize = JSON.stringify(tasksToKeep).length * 2;
       const spaceSaved = currentSize - newSize;
-      
+
       if (removedCount > 0) {
         this._tasks.set(tasksToKeep);
         this.reorderAllColumns(); // Ensure proper ordering after cleanup
         this.saveTasks();
-        
+
         console.log(`Cleaned up ${removedCount} old completed tasks, saved ${spaceSaved} bytes`);
       }
-      
+
       return { removedCount, spaceSaved };
     } catch (error) {
       this.errorHandler.handleError(error, 'cleanupOldTasks');
