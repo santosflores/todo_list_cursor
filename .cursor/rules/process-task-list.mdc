@@ -1,58 +1,48 @@
----
-description: These rules instruct the agent what steps to follow when request to implement a task.
-alwaysApply: false
----
-# Task List Management
+# Task Management Protocol
 
-Guidelines for managing task lists in markdown files to track progress on completing a PRD
+## CRITICAL: One Sub-Task at a Time
 
-## Task Implementation
+- NEVER start the next sub-task without explicit user permission
+- After completing ANY sub-task, IMMEDIATELY stop and ask: "Task X.Y complete. May I proceed with X.Z?"
+- Wait for user confirmation ("y", "yes", or explicit instruction) before continuing
+- If user says anything other than clear approval, stop and await further direction
 
-- **One sub-task at a time:** Do **NOT** start the next sub‑task until you ask the user for permission and they say "yes" or "y"
-- **Completion protocol:**
+## Sub-Task Completion Protocol
 
-  1. When you finish a **sub‑task**, immediately mark it as completed by changing `[ ]` to `[x]`.
-  2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
+1. Mark completed sub-task as `[x]` in task file
+2. Update "Relevant Files" section with any changes
+3. Ask user for permission to continue
+4. STOP and wait for response
 
-  - **First**: Run the full test suite (`pytest`, `npm test`, `bin/rails test`, etc.)
-  - **Only if all tests pass**: Stage changes (`git add .`)
-  - **Clean up**: Remove any temporary files and temporary code before committing
-  - **Commit**: Use a descriptive commit message that:
+## Parent Task Completion Protocol
 
-    - Uses conventional commit format (`feat:`, `fix:`, `refactor:`, etc.)
-    - Summarizes what was accomplished in the parent task
-    - Lists key changes and additions
-    - References the task number and PRD context
-    - **Formats the message as a single-line command using `-m` flags**, e.g.:
+When ALL sub-tasks under a parent are complete:
 
-      ```sh
-      git commit -m "feat: add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Related to T123 in PRD"
-      ```
+1. Run full test suite if available
+2. Stage changes: `git add .`
+3. Clean up temporary files
+4. Commit with conventional format:
 
-  3. Once all the subtasks are marked completed and changes have been committed, mark the **parent task** as completed.
+   ```sh
+   git commit -m "feat: [parent task summary]" -m "- [key changes]" -m "- [additions]" -m "Related to [task#]"
+   ```
 
-- Stop after each sub‑task and wait for the user's go‑ahead.
+5. Mark parent task as `[x]`
 
-## Task List Maintenance
+## Forbidden Actions
 
-1. **Update the task list as you work:**
+- NEVER work on multiple sub-tasks in sequence without permission
+- NEVER assume user wants to continue to next task
+- NEVER batch multiple sub-tasks together
+- NEVER proceed if user gives unclear or ambiguous response
 
-   - Mark tasks and subtasks as completed (`[x]`) per the protocol above.
-   - Add new tasks as they emerge.
+## Required Responses
 
-2. **Maintain the "Relevant Files" section:**
-   - List every file created or modified.
-   - Give each file a one‑line description of its purpose.
+Always end sub-task completion with:
+"✅ Task X.Y completed: [brief description]
 
-## AI Instructions
+May I proceed with Task X.Z: [next task description]?"
 
-When working with task lists, the AI must:
+## Emergency Stop
 
-1. Regularly update the task list file after finishing any significant work.
-2. Follow the completion protocol:
-   - Mark each finished **sub‑task** `[x]`.
-   - Mark the **parent task** `[x]` once **all** its subtasks are `[x]`.
-3. Add newly discovered tasks.
-4. Keep "Relevant Files" accurate and up to date.
-5. Before starting work, check which sub‑task is next.
-6. After implementing a sub‑task, update the file and then pause for user approval.
+If user says "stop", "wait", "pause", or shows any hesitation, immediately halt all work and await clarification.
