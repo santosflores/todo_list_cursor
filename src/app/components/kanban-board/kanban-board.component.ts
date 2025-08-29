@@ -28,6 +28,14 @@ import { Task } from '../../models/task.model';
 import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
 import { DragDropTestRunner } from './drag-drop-test-runner';
 
+// Global window extensions for testing utilities
+declare global {
+  interface Window {
+    dragDropTestRunner?: DragDropTestRunner;
+    testPersistence?: () => void;
+  }
+}
+
 @Component({
   selector: 'app-kanban-board',
   imports: [
@@ -70,6 +78,16 @@ export class KanbanBoardComponent {
     // Expose to global scope for browser console access
     if (typeof window !== 'undefined') {
       window.dragDropTestRunner = this.testRunner;
+      
+      // Add simple persistence test functions to global scope
+      window.testPersistence = () => {
+        console.log('🧪 Testing localStorage persistence...');
+        console.log('Tasks in localStorage:', localStorage.getItem('daily-tasks'));
+        console.log('Current version:', localStorage.getItem('daily-tasks-version'));
+        console.log('Total tasks loaded:', this.taskService.allTasks().length);
+        console.log('Storage info:', this.taskService.getStorageInfo());
+        console.log('Data version info:', this.taskService.getDataVersion());
+      };
     }
   }
 

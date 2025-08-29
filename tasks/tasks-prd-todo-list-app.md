@@ -76,14 +76,14 @@
   - [x] 5.6 Add keyboard shortcuts (Enter to save, Esc to cancel)
   - [x] 5.7 Test all editing scenarios and edge cases
 
-- [ ] 6.0 Data Persistence and Storage
+- [x] 6.0 Data Persistence and Storage
 
-  - [ ] 6.1 Implement localStorage save functionality for tasks
-  - [ ] 6.2 Implement localStorage load functionality on app initialization
-  - [ ] 6.3 Handle localStorage errors and edge cases
-  - [ ] 6.4 Persist task order and column positions
-  - [ ] 6.5 Add data migration logic for future schema changes
-  - [ ] 6.6 Test persistence across browser sessions
+  - [x] 6.1 Implement localStorage save functionality for tasks
+  - [x] 6.2 Implement localStorage load functionality on app initialization
+  - [x] 6.3 Handle localStorage errors and edge cases
+  - [x] 6.4 Persist task order and column positions
+  - [x] 6.5 Add data migration logic for future schema changes
+  - [x] 6.6 Test persistence across browser sessions
 
 - [ ] 7.0 User Interface Polish and Toast Notifications
 
