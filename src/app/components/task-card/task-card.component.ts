@@ -35,16 +35,51 @@ import { Task } from '../../models/task.model';
             {{ task().title }}
           </h3>
         }
-        <button class="delete-btn" 
-                (click)="onDelete()" 
-                type="button"
-                title="Delete task">
-          ×
-        </button>
+        <div class="task-actions">
+          <button class="edit-btn" 
+                  (click)="onEdit()" 
+                  type="button"
+                  title="Edit task">
+            ✏️
+          </button>
+          <button class="delete-btn" 
+                  (click)="onDelete()" 
+                  type="button"
+                  title="Delete task">
+            ×
+          </button>
+        </div>
       </div>
       
-      @if (task().description) {
-        <p class="task-description">{{ task().description }}</p>
+      @if (isEditingDescription()) {
+        <textarea
+          #descriptionInput
+          class="task-description-input"
+          [(ngModel)]="editedDescription"
+          (blur)="saveDescriptionEdit()"
+          (keydown.escape)="cancelDescriptionEdit()"
+          (keydown.ctrl.enter)="saveDescriptionEdit()"
+          maxlength="256"
+          placeholder="Enter task description..."
+          rows="3"
+          (click)="$event.stopPropagation()"
+        ></textarea>
+      } @else {
+        @if (task().description) {
+          <p 
+            class="task-description clickable"
+            (click)="startDescriptionEdit()"
+            title="Click to edit">
+            {{ task().description }}
+          </p>
+        } @else {
+          <p 
+            class="task-description-placeholder clickable"
+            (click)="startDescriptionEdit()"
+            title="Click to add description">
+            Click to add description...
+          </p>
+        }
       }
       
       <div class="task-footer">
@@ -124,11 +159,19 @@ import { Task } from '../../models/task.model';
       box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
     }
 
+    .task-actions {
+      display: flex;
+      gap: 4px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .edit-btn,
     .delete-btn {
       background: none;
       border: none;
       color: #666;
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
       padding: 0;
       width: 24px;
@@ -137,8 +180,16 @@ import { Task } from '../../models/task.model';
       align-items: center;
       justify-content: center;
       border-radius: 4px;
-      margin-left: 8px;
-      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .edit-btn:hover {
+      background: #f5f5f5;
+      color: #2196F3;
+    }
+
+    .delete-btn {
+      font-size: 18px;
     }
 
     .delete-btn:hover {
@@ -152,6 +203,55 @@ import { Task } from '../../models/task.model';
       font-size: 14px;
       line-height: 1.5;
       word-wrap: break-word;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .task-description.clickable {
+      cursor: pointer;
+    }
+
+    .task-description.clickable:hover {
+      background-color: #f5f5f5;
+    }
+
+    .task-description-placeholder {
+      margin: 0 0 12px 0;
+      color: #999;
+      font-size: 14px;
+      line-height: 1.5;
+      font-style: italic;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .task-description-placeholder:hover {
+      background-color: #f5f5f5;
+      color: #777;
+    }
+
+    .task-description-input {
+      margin: 0 0 12px 0;
+      color: #666;
+      font-size: 14px;
+      line-height: 1.5;
+      width: 100%;
+      border: 2px solid #2196F3;
+      border-radius: 4px;
+      padding: 8px;
+      background: white;
+      outline: none;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .task-description-input:focus {
+      border-color: #1976D2;
+      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
     }
 
     .task-footer {
@@ -198,10 +298,13 @@ export class TaskCardComponent {
   // Output events
   deleteTask = output<string>();
   updateTask = output<{ id: string; updates: Partial<Pick<Task, 'title' | 'description'>> }>();
+  editTask = output<Task>();
 
   // Editing state
   isEditingTitle = signal(false);
   editedTitle = '';
+  isEditingDescription = signal(false);
+  editedDescription = '';
 
   /**
    * Formats the creation date for display
@@ -238,6 +341,13 @@ export class TaskCardComponent {
    */
   onDelete(): void {
     this.deleteTask.emit(this.task().id);
+  }
+
+  /**
+   * Handles task editing - opens the modal
+   */
+  onEdit(): void {
+    this.editTask.emit(this.task());
   }
 
   /**
@@ -281,5 +391,52 @@ export class TaskCardComponent {
   cancelTitleEdit(): void {
     this.isEditingTitle.set(false);
     this.editedTitle = '';
+  }
+
+  /**
+   * Starts editing the task description
+   */
+  startDescriptionEdit(): void {
+    this.editedDescription = this.task().description || '';
+    this.isEditingDescription.set(true);
+    
+    // Focus the textarea after the view updates
+    setTimeout(() => {
+      const textarea = document.querySelector('.task-description-input') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.focus();
+        textarea.select();
+      }
+    });
+  }
+
+  /**
+   * Saves the description edit if valid
+   */
+  saveDescriptionEdit(): void {
+    const trimmedDescription = this.editedDescription.trim();
+    const currentDescription = this.task().description || '';
+    
+    // Check if description actually changed
+    if (trimmedDescription !== currentDescription) {
+      if (trimmedDescription.length <= 256) {
+        // If description is empty, pass undefined to remove it
+        const descriptionValue = trimmedDescription || undefined;
+        this.updateTask.emit({
+          id: this.task().id,
+          updates: { description: descriptionValue }
+        });
+      }
+    }
+    
+    this.cancelDescriptionEdit();
+  }
+
+  /**
+   * Cancels the description edit
+   */
+  cancelDescriptionEdit(): void {
+    this.isEditingDescription.set(false);
+    this.editedDescription = '';
   }
 }

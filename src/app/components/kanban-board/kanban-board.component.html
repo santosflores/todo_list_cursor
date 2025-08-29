@@ -54,7 +54,9 @@
             <app-task-card 
               [task]="task" 
               (deleteTask)="onDeleteTask($event)"
-              (updateTask)="onUpdateTask($event)" />
+              (updateTask)="onUpdateTask($event)"
+              (editTask)="openEditModal($event)"
+              (dblclick)="openEditModal(task)" />
 
             <!-- Custom drag preview -->
             <div *cdkDragPreview class="drag-preview">
@@ -85,3 +87,11 @@
     }
   </div>
 </div>
+
+<!-- Task Edit Modal -->
+<app-task-edit-modal
+  [task]="editingTask()"
+  [isOpen]="isModalOpen()"
+  (save)="onModalSave($event)"
+  (cancel)="closeEditModal()"
+/>
