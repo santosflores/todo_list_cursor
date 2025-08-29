@@ -68,22 +68,9 @@
     </div>
   }
 
-  <!-- Tasks List -->
-  <main class="tasks-container">
-    @if (allTasks().length === 0) {
-      <div class="empty-state">
-        <p>No tasks yet. Create your first task to get started!</p>
-      </div>
-    } @else {
-      <div class="tasks-list">
-        <h2>All Tasks ({{ allTasks().length }})</h2>
-        @for (task of allTasks(); track task.id) {
-          <app-task-card 
-            [task]="task"
-            (deleteTask)="onDeleteTask($event)" />
-        }
-      </div>
-    }
+  <!-- Kanban Board -->
+  <main class="kanban-container">
+    <app-kanban-board />
   </main>
 </div>
 

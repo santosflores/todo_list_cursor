@@ -1,0 +1,99 @@
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { TaskCardComponent } from '../task-card/task-card.component';
+import { TaskService } from '../../services/task.service';
+import { Task } from '../../models/task.model';
+import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
+
+@Component({
+  selector: 'app-kanban-board',
+  imports: [CommonModule, TaskCardComponent],
+  templateUrl: './kanban-board.component.html',
+  styleUrl: './kanban-board.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class KanbanBoardComponent {
+  private taskService = inject(TaskService);
+  
+  // Column definitions
+  readonly columns = [
+    { 
+      id: TaskStatus.BACKLOG,
+      title: 'Backlog',
+      description: 'Tasks to be started'
+    },
+    { 
+      id: TaskStatus.IN_PROGRESS,
+      title: 'In Progress', 
+      description: 'Tasks currently being worked on'
+    },
+    { 
+      id: TaskStatus.DONE,
+      title: 'Done',
+      description: 'Completed tasks'
+    }
+  ];
+
+  // Get all tasks from service
+  allTasks = this.taskService.allTasks;
+
+  // Computed signals for tasks grouped by status
+  backlogTasks = computed(() => 
+    this.allTasks()
+      .filter(task => task.status === TaskStatus.BACKLOG)
+      .sort((a, b) => a.order - b.order)
+  );
+
+  inProgressTasks = computed(() => 
+    this.allTasks()
+      .filter(task => task.status === TaskStatus.IN_PROGRESS)
+      .sort((a, b) => a.order - b.order)
+  );
+
+  doneTasks = computed(() => 
+    this.allTasks()
+      .filter(task => task.status === TaskStatus.DONE)
+      .sort((a, b) => a.order - b.order)
+  );
+
+  /**
+   * Gets tasks for a specific column status
+   */
+  getTasksForColumn(status: TaskStatusType): Task[] {
+    switch (status) {
+      case TaskStatus.BACKLOG:
+        return this.backlogTasks();
+      case TaskStatus.IN_PROGRESS:
+        return this.inProgressTasks();
+      case TaskStatus.DONE:
+        return this.doneTasks();
+      default:
+        return [];
+    }
+  }
+
+  /**
+   * Handles task deletion
+   */
+  onDeleteTask(taskId: string): void {
+    const task = this.taskService.getTask(taskId);
+    if (!task) {
+      return;
+    }
+    
+    const confirmed = confirm(
+      `Are you sure you want to delete the task "${task.title}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (confirmed) {
+      const success = this.taskService.deleteTask(taskId);
+      if (success) {
+        // TODO: Show success toast notification
+        console.log('Task deleted successfully');
+      } else {
+        // TODO: Show error toast notification
+        console.error('Failed to delete task');
+      }
+    }
+  }
+}

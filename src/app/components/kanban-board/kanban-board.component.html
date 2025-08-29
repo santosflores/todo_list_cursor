@@ -1,0 +1,29 @@
+<div class="kanban-board">
+  <div class="kanban-columns">
+    @for (column of columns; track column.id) {
+      <div class="kanban-column">
+        <div class="column-header">
+          <h3 class="column-title">{{ column.title }}</h3>
+          <span class="task-count">{{ getTasksForColumn(column.id).length }}</span>
+        </div>
+        <p class="column-description">{{ column.description }}</p>
+        
+        <div class="column-content">
+          <div class="task-list">
+            @if (getTasksForColumn(column.id).length === 0) {
+              <div class="empty-column">
+                <p>No tasks in {{ column.title.toLowerCase() }}</p>
+              </div>
+            } @else {
+              @for (task of getTasksForColumn(column.id); track task.id) {
+                <app-task-card 
+                  [task]="task"
+                  (deleteTask)="onDeleteTask($event)" />
+              }
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

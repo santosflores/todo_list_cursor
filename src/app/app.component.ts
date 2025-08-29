@@ -3,12 +3,12 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { TaskService } from './services/task.service';
-import { TaskCardComponent } from './components/task-card/task-card.component';
+import { KanbanBoardComponent } from './components/kanban-board/kanban-board.component';
 import { Task } from './models/task.model';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, ReactiveFormsModule, TaskCardComponent],
+  imports: [RouterOutlet, CommonModule, ReactiveFormsModule, KanbanBoardComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -24,9 +24,6 @@ export class AppComponent {
   
   // Signals for reactive data
   showForm = signal(false);
-  
-  // Computed signals from task service
-  allTasks = this.taskService.allTasks;
   
   constructor() {
     this.taskForm = this.fb.group({
@@ -66,30 +63,7 @@ export class AppComponent {
     }
   }
   
-  /**
-   * Handles task deletion with confirmation dialog
-   */
-  onDeleteTask(taskId: string): void {
-    const task = this.taskService.getTask(taskId);
-    if (!task) {
-      return;
-    }
-    
-    const confirmed = confirm(
-      `Are you sure you want to delete the task "${task.title}"?\n\nThis action cannot be undone.`
-    );
-    
-    if (confirmed) {
-      const success = this.taskService.deleteTask(taskId);
-      if (success) {
-        // TODO: Show success toast notification
-        console.log('Task deleted successfully');
-      } else {
-        // TODO: Show error toast notification
-        console.error('Failed to delete task');
-      }
-    }
-  }
+
   
   /**
    * Gets validation error message for a form field
