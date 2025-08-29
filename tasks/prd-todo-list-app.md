@@ -42,23 +42,23 @@ The Daily Task Management App is a modern, web-based todo list application desig
 
 ### Data Persistence
 
-8. The system must save all task data to browser localStorage automatically.
-9. The system must load previously saved tasks when the application starts.
-10. The system must persist task order and column positions between sessions.
+1. The system must save all task data to browser localStorage automatically.
+2. The system must load previously saved tasks when the application starts.
+3. The system must persist task order and column positions between sessions.
 
 ### User Interface
 
-11. The system must use a card-based design with clear borders and subtle shadows for task display.
-12. The system must provide a modern, clean visual design optimized for desktop browsers.
-13. The system must show simple toast notifications for errors and important actions.
-14. The system must provide confirmation dialogs for delete operations and major task movements.
+1. The system must use a card-based design with clear borders and subtle shadows for task display.
+2. The system must provide a modern, clean visual design optimized for desktop browsers.
+3. The system must show simple toast notifications for errors and important actions.
+4. The system must provide confirmation dialogs for delete operations and major task movements.
 
 ### Validation & Error Handling
 
-15. The system must enforce the 128-character limit for task titles.
-16. The system must enforce the 256-character limit for task descriptions.
-17. The system must require a title before allowing task creation.
-18. The system must handle localStorage errors gracefully with user notifications.
+1. The system must enforce the 128-character limit for task titles.
+2. The system must enforce the 256-character limit for task descriptions.
+3. The system must require a title before allowing task creation.
+4. The system must handle localStorage errors gracefully with user notifications.
 
 ## Non-Goals (Out of Scope)
 
