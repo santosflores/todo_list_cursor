@@ -51,7 +51,10 @@
             (cdkDragStarted)="onDragStart($event)"
             (cdkDragEnded)="onDragEnd($event)"
           >
-            <app-task-card [task]="task" (deleteTask)="onDeleteTask($event)" />
+            <app-task-card 
+              [task]="task" 
+              (deleteTask)="onDeleteTask($event)"
+              (updateTask)="onUpdateTask($event)" />
 
             <!-- Custom drag preview -->
             <div *cdkDragPreview class="drag-preview">

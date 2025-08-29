@@ -150,6 +150,23 @@ export class KanbanBoardComponent {
   }
 
   /**
+   * Handles task updates from inline editing
+   */
+  onUpdateTask(event: { id: string; updates: Partial<Pick<Task, 'title' | 'description'>> }): void {
+    try {
+      const updatedTask = this.taskService.updateTask(event.id, event.updates);
+      console.log('Task updated successfully:', updatedTask);
+      // TODO: Show success toast notification
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      // TODO: Show error toast notification
+      if (error instanceof Error) {
+        alert(`Failed to update task: ${error.message}`);
+      }
+    }
+  }
+
+  /**
    * Handles drag and drop events for tasks with enhanced persistence
    */
   onDrop(event: CdkDragDrop<Task[]>): void {

@@ -6,7 +6,7 @@
 - `src/app/app.component.html` - Template for the main app layout including header and kanban board.
 - `src/app/components/kanban-board/kanban-board.component.ts` - Core component managing the three-column layout and drag-and-drop logic.
 - `src/app/components/kanban-board/kanban-board.component.html` - Template for the three-column kanban layout.
-- `src/app/components/task-card/task-card.component.ts` - Individual task card component with inline editing capabilities.
+- `src/app/components/task-card/task-card.component.ts` - Individual task card component with inline editing capabilities for task titles.
 - `src/app/components/task-card/task-card.component.html` - Template for task card display and inline editing.
 - `src/app/components/task-edit-modal/task-edit-modal.component.ts` - Modal component for detailed task editing.
 - `src/app/components/task-edit-modal/task-edit-modal.component.html` - Template for the task editing modal.
@@ -68,7 +68,7 @@
 
 - [ ] 5.0 Task Editing and Modal Interface
 
-  - [ ] 5.1 Implement inline editing for task titles (click to edit)
+  - [x] 5.1 Implement inline editing for task titles (click to edit)
   - [ ] 5.2 Implement inline editing for task descriptions
   - [ ] 5.3 Create TaskEditModalComponent for detailed editing
   - [ ] 5.4 Add modal trigger and form validation

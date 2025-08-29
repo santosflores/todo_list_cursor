@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Task } from '../../models/task.model';
 
 /**
@@ -7,14 +8,33 @@ import { Task } from '../../models/task.model';
  */
 @Component({
   selector: 'app-task-card',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="task-card" [class.task-backlog]="task().status === 'backlog'" 
          [class.task-in-progress]="task().status === 'in-progress'"
          [class.task-done]="task().status === 'done'">
       
       <div class="task-header">
-        <h3 class="task-title">{{ task().title }}</h3>
+        @if (isEditingTitle()) {
+          <input
+            #titleInput
+            type="text"
+            class="task-title-input"
+            [(ngModel)]="editedTitle"
+            (blur)="saveTitleEdit()"
+            (keydown.enter)="saveTitleEdit()"
+            (keydown.escape)="cancelTitleEdit()"
+            maxlength="128"
+            (click)="$event.stopPropagation()"
+          />
+        } @else {
+          <h3 
+            class="task-title clickable"
+            (click)="startTitleEdit()"
+            title="Click to edit">
+            {{ task().title }}
+          </h3>
+        }
         <button class="delete-btn" 
                 (click)="onDelete()" 
                 type="button"
@@ -71,6 +91,37 @@ import { Task } from '../../models/task.model';
       line-height: 1.4;
       flex: 1;
       word-wrap: break-word;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+
+    .task-title.clickable {
+      cursor: pointer;
+    }
+
+    .task-title.clickable:hover {
+      background-color: #f5f5f5;
+    }
+
+    .task-title-input {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.4;
+      flex: 1;
+      border: 2px solid #2196F3;
+      border-radius: 4px;
+      padding: 4px 8px;
+      background: white;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .task-title-input:focus {
+      border-color: #1976D2;
+      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
     }
 
     .delete-btn {
@@ -146,6 +197,11 @@ export class TaskCardComponent {
   
   // Output events
   deleteTask = output<string>();
+  updateTask = output<{ id: string; updates: Partial<Pick<Task, 'title' | 'description'>> }>();
+
+  // Editing state
+  isEditingTitle = signal(false);
+  editedTitle = '';
 
   /**
    * Formats the creation date for display
@@ -182,5 +238,48 @@ export class TaskCardComponent {
    */
   onDelete(): void {
     this.deleteTask.emit(this.task().id);
+  }
+
+  /**
+   * Starts editing the task title
+   */
+  startTitleEdit(): void {
+    this.editedTitle = this.task().title;
+    this.isEditingTitle.set(true);
+    
+    // Focus the input after the view updates
+    setTimeout(() => {
+      const input = document.querySelector('.task-title-input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    });
+  }
+
+  /**
+   * Saves the title edit if valid
+   */
+  saveTitleEdit(): void {
+    const trimmedTitle = this.editedTitle.trim();
+    
+    if (trimmedTitle && trimmedTitle !== this.task().title) {
+      if (trimmedTitle.length <= 128) {
+        this.updateTask.emit({
+          id: this.task().id,
+          updates: { title: trimmedTitle }
+        });
+      }
+    }
+    
+    this.cancelTitleEdit();
+  }
+
+  /**
+   * Cancels the title edit
+   */
+  cancelTitleEdit(): void {
+    this.isEditingTitle.set(false);
+    this.editedTitle = '';
   }
 }
