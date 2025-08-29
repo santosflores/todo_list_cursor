@@ -1,5 +1,5 @@
 .app-container {
-  max-width: 800px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
@@ -135,31 +135,14 @@
   margin-top: 24px;
 }
 
-/* Tasks Container */
-.tasks-container {
+/* Kanban Container */
+.kanban-container {
   background: white;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
-}
-
-.tasks-list h2 {
-  margin: 0 0 20px 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6c757d;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 16px;
+  min-height: 600px;
 }
 
 /* Responsive Design */
@@ -179,7 +162,7 @@
   }
 
   .task-form-container,
-  .tasks-container {
+  .kanban-container {
     padding: 20px;
   }
 
