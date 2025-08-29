@@ -1,3 +1,8 @@
+---
+description: This rule indicates the agent how to process a list of tasks
+alwaysApply: false
+---
+
 # Task Management Protocol
 
 ## CRITICAL: One Sub-Task at a Time
