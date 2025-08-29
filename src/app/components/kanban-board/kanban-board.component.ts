@@ -28,6 +28,14 @@ import { Task } from '../../models/task.model';
 import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
 import { DragDropTestRunner } from './drag-drop-test-runner';
 
+// Global window extensions for testing utilities
+declare global {
+  interface Window {
+    dragDropTestRunner?: DragDropTestRunner;
+    testPersistence?: () => void;
+  }
+}
+
 @Component({
   selector: 'app-kanban-board',
   imports: [
