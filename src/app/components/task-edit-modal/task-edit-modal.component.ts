@@ -48,7 +48,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 type="text"
                 class="form-input"
                 [(ngModel)]="formData.title"
-                (input)="onTitleChange($event)"
+                (input)="updateValidationErrors()"
                 name="title"
                 required
                 maxlength="128"
@@ -70,7 +70,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 id="task-description"
                 class="form-textarea"
                 [(ngModel)]="formData.description"
-                (input)="onDescriptionChange($event)"
+                (input)="updateValidationErrors()"
                 name="description"
                 maxlength="256"
                 placeholder="Enter task description..."
@@ -89,7 +89,6 @@ import { TaskStatusType } from '../../models/task-status.model';
                   id="task-status"
                   class="form-select"
                   [(ngModel)]="formData.status"
-                  (change)="onStatusChange($event)"
                   name="status"
                 >
                 <option value="backlog">Backlog</option>
@@ -330,12 +329,7 @@ export class TaskEditModalComponent {
   save = output<{ task: Task | null; updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> }>();
   cancel = output<void>();
 
-  // Form data as signals
-  private formTitle = signal('');
-  private formDescription = signal('');
-  private formStatus = signal<TaskStatusType>('backlog');
-
-  // Form data object for template binding
+  // Form data
   formData = {
     title: '',
     description: '',
@@ -346,8 +340,8 @@ export class TaskEditModalComponent {
   private validationErrors = signal<{ title?: string; description?: string }>({});
 
   // Computed properties for character counts
-  titleCharCount = computed(() => this.formTitle().length);
-  descriptionCharCount = computed(() => this.formDescription().length);
+  titleCharCount = computed(() => this.formData.title.length);
+  descriptionCharCount = computed(() => this.formData.description.length);
 
   // Computed validation states
   titleError = computed(() => this.validationErrors().title);
@@ -355,8 +349,8 @@ export class TaskEditModalComponent {
 
   // Computed form validation
   isFormValid = computed(() => {
-    const title = this.formTitle().trim();
-    const description = this.formDescription();
+    const title = this.formData.title.trim();
+    const description = this.formData.description;
     
     const titleValid = title.length > 0 && title.length <= 128;
     const descriptionValid = description.length <= 256;
@@ -372,37 +366,7 @@ export class TaskEditModalComponent {
     return text;
   });
 
-  /**
-   * Handles title input changes
-   */
-  onTitleChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    // Update both formData and signal
-    this.formData.title = value;
-    this.formTitle.set(value);
-    this.updateValidationErrors();
-  }
 
-  /**
-   * Handles description input changes
-   */
-  onDescriptionChange(event: Event): void {
-    const value = (event.target as HTMLTextAreaElement).value;
-    // Update both formData and signal
-    this.formData.description = value;
-    this.formDescription.set(value);
-    this.updateValidationErrors();
-  }
-
-  /**
-   * Handles status select changes
-   */
-  onStatusChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value as TaskStatusType;
-    // Update both formData and signal
-    this.formData.status = value;
-    this.formStatus.set(value);
-  }
 
   constructor(private cdr: ChangeDetectorRef) {
     // Initialize form when modal opens or task changes
@@ -429,45 +393,19 @@ export class TaskEditModalComponent {
     console.log('TaskEditModal: Initializing form with task:', currentTask);
 
     if (currentTask) {
-      const title = currentTask.title;
-      const description = currentTask.description || '';
-      const status = currentTask.status;
-      
-      // Update both formData and signals
-      this.formData.title = title;
-      this.formData.description = description;
-      this.formData.status = status;
-      
-      this.formTitle.set(title);
-      this.formDescription.set(description);
-      this.formStatus.set(status);
-      
-      console.log('TaskEditModal: Form data set for editing:', { 
-        formData: this.formData,
-        signals: {
-          title: this.formTitle(), 
-          description: this.formDescription(), 
-          status: this.formStatus() 
-        }
-      });
+      this.formData = {
+        title: currentTask.title,
+        description: currentTask.description || '',
+        status: currentTask.status
+      };
+      console.log('TaskEditModal: Form data set for editing:', this.formData);
     } else {
-      // Update both formData and signals
-      this.formData.title = '';
-      this.formData.description = '';
-      this.formData.status = 'backlog';
-      
-      this.formTitle.set('');
-      this.formDescription.set('');
-      this.formStatus.set('backlog');
-      
-      console.log('TaskEditModal: Form data set for creating:', { 
-        formData: this.formData,
-        signals: {
-          title: this.formTitle(), 
-          description: this.formDescription(), 
-          status: this.formStatus() 
-        }
-      });
+      this.formData = {
+        title: '',
+        description: '',
+        status: 'backlog'
+      };
+      console.log('TaskEditModal: Form data set for creating:', this.formData);
     }
     this.clearValidationErrors();
   }
@@ -475,13 +413,13 @@ export class TaskEditModalComponent {
   /**
    * Updates validation errors based on current form data
    */
-  private updateValidationErrors(): void {
+  updateValidationErrors(): void {
     // Use a small timeout to debounce validation
     setTimeout(() => {
       const errors: { title?: string; description?: string } = {};
 
       // Validate title
-      const title = this.formTitle().trim();
+      const title = this.formData.title.trim();
       if (!title) {
         errors.title = 'Task title is required';
       } else if (title.length > 128) {
@@ -489,7 +427,7 @@ export class TaskEditModalComponent {
       }
 
       // Validate description
-      if (this.formDescription().length > 256) {
+      if (this.formData.description.length > 256) {
         errors.description = 'Description cannot exceed 256 characters';
       }
 
@@ -509,16 +447,7 @@ export class TaskEditModalComponent {
    */
   onSave(): void {
     console.log('TaskEditModal: onSave called');
-    console.log('TaskEditModal: formData (actual form values):', {
-      title: this.formData.title,
-      description: this.formData.description,
-      status: this.formData.status
-    });
-    console.log('TaskEditModal: signals:', {
-      title: this.formTitle(),
-      description: this.formDescription(),
-      status: this.formStatus()
-    });
+    console.log('TaskEditModal: formData:', this.formData);
     console.log('TaskEditModal: isFormValid result:', this.isFormValid());
     console.log('TaskEditModal: current task:', this.task());
 
@@ -527,9 +456,12 @@ export class TaskEditModalComponent {
       return;
     }
 
+    const trimmedTitle = this.formData.title.trim();
+    const trimmedDescription = this.formData.description.trim();
+
     const updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> = {
-      title: this.formData.title.trim(),
-      description: this.formData.description.trim() || undefined,
+      title: trimmedTitle,
+      description: trimmedDescription || undefined,
       status: this.formData.status
     };
 
