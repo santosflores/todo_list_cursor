@@ -14,6 +14,8 @@
 - `src/app/services/toast.service.ts` - Service for displaying toast notifications.
 - `src/app/models/task.model.ts` - TypeScript interface/model for Task data structure.
 - `src/app/models/task-status.model.ts` - TypeScript enum for task status values.
+- `src/app/services/task.service.spec.ts` - Comprehensive unit tests for TaskService.
+- `src/app/services/toast.service.spec.ts` - Unit tests for ToastService.
 - `src/styles.css` - Global styles for the application.
 - `angular.json` - Angular workspace configuration.
 - `package.json` - Project dependencies and scripts.
@@ -36,14 +38,14 @@
   - [x] 1.5 Set up basic routing (if needed for future expansion)
   - [x] 1.6 Configure development environment and scripts
 
-- [ ] 2.0 Core Data Models and Services
+- [x] 2.0 Core Data Models and Services
 
-  - [ ] 2.1 Create Task interface with id, title, description, status, createdAt, order fields
-  - [ ] 2.2 Create TaskStatus enum for "backlog", "in-progress", "done" statuses
-  - [ ] 2.3 Implement TaskService with CRUD operations
-  - [ ] 2.4 Add methods for task ordering and status management
-  - [ ] 2.5 Implement ToastService for notifications
-  - [ ] 2.6 Create service unit tests
+  - [x] 2.1 Create Task interface with id, title, description, status, createdAt, order fields
+  - [x] 2.2 Create TaskStatus enum for "backlog", "in-progress", "done" statuses
+  - [x] 2.3 Implement TaskService with CRUD operations
+  - [x] 2.4 Add methods for task ordering and status management
+  - [x] 2.5 Implement ToastService for notifications
+  - [x] 2.6 Create service unit tests
 
 - [ ] 3.0 Basic Task Management Functionality
 
