@@ -32,19 +32,19 @@ export interface ConfirmationDialogData {
             </div>
             <h3 class="dialog-title">{{ data().title }}</h3>
           </div>
-          
+
           <div class="dialog-content">
             <p class="dialog-message">{{ data().message }}</p>
           </div>
-          
+
           <div class="dialog-actions">
-            <button 
+            <button
               class="btn btn-secondary"
               (click)="onCancel()"
               type="button">
               {{ data().cancelText || 'Cancel' }}
             </button>
-            <button 
+            <button
               class="btn"
               [class.btn-danger]="data().type === 'danger'"
               [class.btn-warning]="data().type === 'warning'"
@@ -89,7 +89,7 @@ export interface ConfirmationDialogData {
     .dialog-container {
       background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
       border-radius: 16px;
-      box-shadow: 
+      box-shadow:
         0 20px 40px rgba(0, 0, 0, 0.2),
         0 10px 20px rgba(0, 0, 0, 0.1);
       border: 1px solid #e8edf2;
@@ -103,7 +103,7 @@ export interface ConfirmationDialogData {
     }
 
     .dialog-container:focus {
-      box-shadow: 
+      box-shadow:
         0 20px 40px rgba(0, 0, 0, 0.2),
         0 10px 20px rgba(0, 0, 0, 0.1),
         0 0 0 3px rgba(0, 123, 255, 0.3);
@@ -268,19 +268,19 @@ export interface ConfirmationDialogData {
         max-width: none;
         border-radius: 12px;
       }
-      
+
       .dialog-header,
       .dialog-content,
       .dialog-actions {
         padding-left: 20px;
         padding-right: 20px;
       }
-      
+
       .dialog-actions {
         flex-direction: column-reverse;
         gap: 8px;
       }
-      
+
       .btn {
         width: 100%;
       }
@@ -291,10 +291,10 @@ export interface ConfirmationDialogData {
 export class ConfirmationDialogComponent {
   // Input for dialog visibility
   isOpen = input<boolean>(false);
-  
+
   // Input for dialog configuration
   data = input.required<ConfirmationDialogData>();
-  
+
   // Output events
   confirm = output<void>();
   cancel = output<void>();
@@ -312,7 +312,7 @@ export class ConfirmationDialogComponent {
         };
 
         document.addEventListener('keydown', handleKeyDown);
-        
+
         // Focus the dialog for keyboard accessibility
         setTimeout(() => {
           const dialog = document.querySelector('.dialog-container') as HTMLElement;
@@ -323,6 +323,7 @@ export class ConfirmationDialogComponent {
           document.removeEventListener('keydown', handleKeyDown);
         };
       }
+      return undefined;
     });
   }
 
