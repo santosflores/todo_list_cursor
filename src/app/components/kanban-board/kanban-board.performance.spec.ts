@@ -170,8 +170,8 @@ describe('KanbanBoardComponent - Performance Testing', () => {
         component.onDrop(event);
         
         // Force garbage collection hint (not guaranteed but helps in testing)
-        if ((global as any).gc) {
-          (global as any).gc();
+        if (typeof window !== 'undefined' && (window as any).gc) {
+          (window as any).gc();
         }
       }
       

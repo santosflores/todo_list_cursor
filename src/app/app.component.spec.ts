@@ -142,39 +142,8 @@ describe('AppComponent', () => {
     expect(component.showForm()).toBeTruthy(); // Form should remain open on error
   });
 
-  it('should show confirmation dialog when deleting task', () => {
-    const mockTask = mockTasks[0];
-    taskService.getTask.and.returnValue(mockTask);
-    taskService.deleteTask.and.returnValue(true);
-    spyOn(window, 'confirm').and.returnValue(true);
-    
-    component.onDeleteTask('1');
-    
-    expect(window.confirm).toHaveBeenCalledWith(
-      'Are you sure you want to delete the task "Test Task 1"?\n\nThis action cannot be undone.'
-    );
-    expect(taskService.deleteTask).toHaveBeenCalledWith('1');
-  });
-
-  it('should not delete task when confirmation is cancelled', () => {
-    const mockTask = mockTasks[0];
-    taskService.getTask.and.returnValue(mockTask);
-    spyOn(window, 'confirm').and.returnValue(false);
-    
-    component.onDeleteTask('1');
-    
-    expect(taskService.deleteTask).not.toHaveBeenCalled();
-  });
-
-  it('should handle task not found gracefully', () => {
-    taskService.getTask.and.returnValue(undefined);
-    spyOn(window, 'confirm');
-    
-    component.onDeleteTask('nonexistent');
-    
-    expect(window.confirm).not.toHaveBeenCalled();
-    expect(taskService.deleteTask).not.toHaveBeenCalled();
-  });
+  // Note: Task deletion is handled by KanbanBoardComponent, not AppComponent
+  // These tests would be more appropriate in kanban-board.component.spec.ts
 
   describe('Form Validation', () => {
     it('should return required error for empty title', () => {

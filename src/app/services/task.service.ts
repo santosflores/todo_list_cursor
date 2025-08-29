@@ -11,6 +11,8 @@ import { TaskStatus, TaskStatusType } from '../models/task-status.model';
 export class TaskService {
   private readonly STORAGE_KEY = 'daily-tasks';
   private readonly PERFORMANCE_KEY = 'daily-tasks-performance';
+  private readonly VERSION_KEY = 'daily-tasks-version';
+  private readonly CURRENT_VERSION = '1.0.0';
 
   // Signal for all tasks
   private _tasks = signal<Task[]>([]);
@@ -45,8 +47,213 @@ export class TaskService {
   readonly allTasks = computed(() => this._tasks());
 
   constructor() {
+    this.handleDataMigration();
     this.loadTasks();
     this.validateAndRepairOnInit();
+  }
+
+  /**
+   * Handles data migration for schema changes between versions
+   */
+  private handleDataMigration(): void {
+    try {
+      const currentVersion = localStorage.getItem(this.VERSION_KEY);
+      
+      if (!currentVersion) {
+        // First time user or legacy data without version
+        this.migrateLegacyData();
+        localStorage.setItem(this.VERSION_KEY, this.CURRENT_VERSION);
+        console.log('TaskService: Initialized data version to', this.CURRENT_VERSION);
+        return;
+      }
+
+      if (currentVersion !== this.CURRENT_VERSION) {
+        console.log(`TaskService: Migration needed from ${currentVersion} to ${this.CURRENT_VERSION}`);
+        this.migrateData(currentVersion, this.CURRENT_VERSION);
+        localStorage.setItem(this.VERSION_KEY, this.CURRENT_VERSION);
+        console.log('TaskService: Migration completed successfully');
+      } else {
+        console.log('TaskService: Data version is current, no migration needed');
+      }
+    } catch (error) {
+      console.error('TaskService: Error during data migration:', error);
+      // Continue without migration - let validation handle any issues
+    }
+  }
+
+  /**
+   * Migrates legacy data (data without version) to current schema
+   */
+  private migrateLegacyData(): void {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (!stored) {
+        return; // No data to migrate
+      }
+
+      const data = JSON.parse(stored);
+      
+      // Check if this looks like legacy task data (array of tasks without version wrapper)
+      if (Array.isArray(data) && data.length > 0 && data[0].id) {
+        console.log('TaskService: Detected legacy task data, performing migration');
+        
+        // Validate and clean up legacy data
+        const migratedTasks = data.map((task: any, index: number) => ({
+          id: task.id || `migrated_task_${Date.now()}_${index}`,
+          title: task.title || 'Untitled Task',
+          description: task.description || undefined,
+          status: this.validateStatus(task.status) || TaskStatus.BACKLOG,
+          createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
+          order: typeof task.order === 'number' ? task.order : index
+        }));
+
+        // Save migrated data
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(migratedTasks.map(task => ({
+          ...task,
+          createdAt: task.createdAt.toISOString()
+        }))));
+        
+        console.log(`TaskService: Successfully migrated ${migratedTasks.length} legacy tasks`);
+      }
+    } catch (error) {
+      console.error('TaskService: Error migrating legacy data:', error);
+      // If migration fails, clear the data to start fresh
+      localStorage.removeItem(this.STORAGE_KEY);
+    }
+  }
+
+  /**
+   * Migrates data between specific versions
+   */
+  private migrateData(fromVersion: string, toVersion: string): void {
+    const migrations = this.getMigrationPath(fromVersion, toVersion);
+    
+    for (const migration of migrations) {
+      try {
+        migration.migrate();
+        console.log(`TaskService: Applied migration ${migration.version}`);
+      } catch (error) {
+        console.error(`TaskService: Failed to apply migration ${migration.version}:`, error);
+        throw new Error(`Migration failed at version ${migration.version}`);
+      }
+    }
+  }
+
+  /**
+   * Gets the sequence of migrations needed to go from one version to another
+   */
+  private getMigrationPath(fromVersion: string, toVersion: string): Array<{
+    version: string;
+    migrate: () => void;
+  }> {
+    const migrations: Array<{ version: string; migrate: () => void }> = [
+      // Future migrations would be added here
+      // Example:
+      // {
+      //   version: '1.1.0',
+      //   migrate: () => this.migrateToV1_1_0()
+      // }
+    ];
+
+    return migrations.filter(migration => 
+      this.compareVersions(migration.version, fromVersion) > 0 &&
+      this.compareVersions(migration.version, toVersion) <= 0
+    );
+  }
+
+  /**
+   * Compares two semantic version strings
+   * Returns: -1 if a < b, 0 if a === b, 1 if a > b
+   */
+  private compareVersions(a: string, b: string): number {
+    const aParts = a.split('.').map(Number);
+    const bParts = b.split('.').map(Number);
+    
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aPart = aParts[i] || 0;
+      const bPart = bParts[i] || 0;
+      
+      if (aPart < bPart) return -1;
+      if (aPart > bPart) return 1;
+    }
+    
+    return 0;
+  }
+
+  /**
+   * Validates and normalizes a task status from potentially old data
+   */
+  private validateStatus(status: any): TaskStatus | null {
+    if (typeof status === 'string') {
+      // Handle old string formats
+      switch (status.toLowerCase()) {
+        case 'backlog':
+        case 'todo':
+        case 'pending':
+          return TaskStatus.BACKLOG;
+        case 'in-progress':
+        case 'inprogress':
+        case 'in_progress':
+        case 'doing':
+        case 'active':
+          return TaskStatus.IN_PROGRESS;
+        case 'done':
+        case 'completed':
+        case 'finished':
+          return TaskStatus.DONE;
+      }
+    }
+    
+    // Check if it's already a valid TaskStatus enum value
+    if (Object.values(TaskStatus).includes(status as TaskStatus)) {
+      return status as TaskStatus;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Example migration function for future use (commented out)
+   */
+  /*
+  private migrateToV1_1_0(): void {
+    const stored = localStorage.getItem(this.STORAGE_KEY);
+    if (!stored) return;
+
+    const tasks = JSON.parse(stored);
+    
+    // Example: Add new field to existing tasks
+    const migratedTasks = tasks.map((task: any) => ({
+      ...task,
+      priority: task.priority || 'medium', // New field with default value
+      tags: task.tags || [] // Another new field
+    }));
+
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(migratedTasks));
+  }
+  */
+
+  /**
+   * Gets current data version and migration info
+   */
+  getDataVersion(): {
+    currentVersion: string;
+    storedVersion: string | null;
+    migrationHistory: string[];
+  } {
+    const storedVersion = localStorage.getItem(this.VERSION_KEY);
+    
+    // For now, migration history is simple, but could be expanded
+    const migrationHistory: string[] = [];
+    if (storedVersion && storedVersion !== this.CURRENT_VERSION) {
+      migrationHistory.push(`Migrated from ${storedVersion} to ${this.CURRENT_VERSION}`);
+    }
+
+    return {
+      currentVersion: this.CURRENT_VERSION,
+      storedVersion,
+      migrationHistory
+    };
   }
 
   /**
