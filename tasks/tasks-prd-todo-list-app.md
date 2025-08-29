@@ -14,6 +14,8 @@
 - `src/app/services/toast.service.ts` - Service for displaying toast notifications.
 - `src/app/models/task.model.ts` - TypeScript interface/model for Task data structure.
 - `src/app/models/task-status.model.ts` - TypeScript enum for task status values.
+- `src/app/services/task.service.spec.ts` - Comprehensive unit tests for TaskService.
+- `src/app/services/toast.service.spec.ts` - Unit tests for ToastService.
 - `src/styles.css` - Global styles for the application.
 - `angular.json` - Angular workspace configuration.
 - `package.json` - Project dependencies and scripts.
