@@ -67,11 +67,28 @@ export class AppComponent {
   }
   
   /**
-   * Handles task deletion
+   * Handles task deletion with confirmation dialog
    */
   onDeleteTask(taskId: string): void {
-    // TODO: Add confirmation dialog in task 3.3
-    this.taskService.deleteTask(taskId);
+    const task = this.taskService.getTask(taskId);
+    if (!task) {
+      return;
+    }
+    
+    const confirmed = confirm(
+      `Are you sure you want to delete the task "${task.title}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (confirmed) {
+      const success = this.taskService.deleteTask(taskId);
+      if (success) {
+        // TODO: Show success toast notification
+        console.log('Task deleted successfully');
+      } else {
+        // TODO: Show error toast notification
+        console.error('Failed to delete task');
+      }
+    }
   }
   
   /**
