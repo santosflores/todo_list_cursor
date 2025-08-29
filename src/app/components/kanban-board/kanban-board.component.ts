@@ -5,6 +5,7 @@ import { TaskCardComponent } from '../task-card/task-card.component';
 import { TaskService } from '../../services/task.service';
 import { Task } from '../../models/task.model';
 import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
+import { DragDropTestRunner } from './drag-drop-test-runner';
 
 @Component({
   selector: 'app-kanban-board',
@@ -22,9 +23,20 @@ export class KanbanBoardComponent {
   dragSourceColumn = signal<string | null>(null);
   dragOverColumn = signal<string | null>(null);
 
+  // Test runner instance
+  private testRunner: DragDropTestRunner;
+
   constructor() {
     // Validate data integrity on component initialization
     this.validateDataIntegrityOnInit();
+    
+    // Initialize test runner
+    this.testRunner = new DragDropTestRunner(this, this.taskService);
+    
+    // Expose to global scope for browser console access
+    if (typeof window !== 'undefined') {
+      window.dragDropTestRunner = this.testRunner;
+    }
   }
   
   // Column definitions
@@ -388,6 +400,147 @@ export class KanbanBoardComponent {
     }
     
     console.groupEnd();
+  }
+
+  /**
+   * Runs comprehensive drag and drop test suite
+   * Available in browser console via: window.dragDropTestRunner.runAllTests()
+   */
+  async runDragDropTests(): Promise<any> {
+    return await this.testRunner.runAllTests();
+  }
+
+  /**
+   * Quick smoke test for drag and drop functionality
+   */
+  quickDragDropTest(): void {
+    console.group('🚀 Quick Drag & Drop Smoke Test');
+    
+    try {
+      // Test 1: Basic component state
+      console.log('1. Testing component state...');
+      const hasCorrectColumns = this.columns.length === 3;
+      console.log(`✅ Columns: ${hasCorrectColumns ? 'OK' : 'FAIL'}`);
+      
+      // Test 2: Task distribution
+      console.log('2. Testing task distribution...');
+      const backlogCount = this.getTasksForColumn(TaskStatus.BACKLOG).length;
+      const inProgressCount = this.getTasksForColumn(TaskStatus.IN_PROGRESS).length;
+      const doneCount = this.getTasksForColumn(TaskStatus.DONE).length;
+      console.log(`   Backlog: ${backlogCount}, In Progress: ${inProgressCount}, Done: ${doneCount}`);
+      
+      // Test 3: Visual feedback state
+      console.log('3. Testing visual feedback...');
+      const initialDragState = this.isDragging();
+      this.isDragging.set(true);
+      const updatedDragState = this.isDragging();
+      this.isDragging.set(false);
+      console.log(`✅ Visual feedback: ${!initialDragState && updatedDragState ? 'OK' : 'FAIL'}`);
+      
+      // Test 4: Status mapping
+      console.log('4. Testing status mapping...');
+      const mappingCorrect = this.getDropListId(TaskStatus.BACKLOG) === 'backlog-list' &&
+                            this.getDropListId(TaskStatus.IN_PROGRESS) === 'in-progress-list' &&
+                            this.getDropListId(TaskStatus.DONE) === 'done-list';
+      console.log(`✅ Status mapping: ${mappingCorrect ? 'OK' : 'FAIL'}`);
+      
+      // Test 5: Service integration
+      console.log('5. Testing service integration...');
+      const integrity = this.taskService.validateTaskIntegrity();
+      console.log(`✅ Data integrity: ${integrity.isValid ? 'OK' : 'ISSUES DETECTED'}`);
+      if (!integrity.isValid) {
+        console.warn('Integrity issues:', integrity.errors);
+      }
+      
+      // Test 6: Performance metrics
+      console.log('6. Testing performance metrics...');
+      const metrics = this.taskService.getPerformanceMetrics();
+      console.log(`   Operations: ${JSON.stringify(metrics.operations)}`);
+      console.log(`   Success rate: ${metrics.successRate}%`);
+      
+      console.log('\n🎉 Quick smoke test completed successfully!');
+      console.log('💡 For comprehensive testing, run: window.dragDropTestRunner.runAllTests()');
+      
+    } catch (error) {
+      console.error('❌ Quick test failed:', error);
+    }
+    
+    console.groupEnd();
+  }
+
+  /**
+   * Creates sample tasks for testing purposes
+   */
+  createTestTasks(count: number = 6): void {
+    console.log(`🏗️ Creating ${count} test tasks...`);
+    
+    const taskNames = [
+      'Implement user authentication',
+      'Design dashboard layout',
+      'Set up CI/CD pipeline',
+      'Write unit tests',
+      'Optimize database queries',
+      'Create API documentation',
+      'Fix responsive design issues',
+      'Add error logging',
+      'Implement caching layer',
+      'Review security protocols'
+    ];
+    
+    const descriptions = [
+      'Set up JWT authentication with refresh tokens',
+      'Create modern, responsive dashboard interface',
+      'Configure automated deployment pipeline',
+      'Write comprehensive test coverage',
+      'Optimize slow database operations',
+      'Document REST API endpoints',
+      'Fix mobile responsiveness issues',
+      'Implement centralized error logging',
+      'Add Redis caching for performance',
+      'Audit and improve security measures'
+    ];
+    
+    for (let i = 0; i < Math.min(count, taskNames.length); i++) {
+      this.taskService.createTask(taskNames[i], descriptions[i]);
+    }
+    
+    console.log(`✅ Created ${Math.min(count, taskNames.length)} test tasks`);
+    
+    // Distribute some tasks to different columns for testing
+    if (count >= 3) {
+      const allTasks = this.taskService.allTasks();
+      if (allTasks.length >= 3) {
+        // Move some tasks to in-progress
+        this.taskService.updateTaskStatus(allTasks[1].id, TaskStatus.IN_PROGRESS);
+        if (allTasks.length >= 4) {
+          this.taskService.updateTaskStatus(allTasks[3].id, TaskStatus.IN_PROGRESS);
+        }
+        
+        // Move some tasks to done
+        if (allTasks.length >= 2) {
+          this.taskService.updateTaskStatus(allTasks[2].id, TaskStatus.DONE);
+        }
+        if (allTasks.length >= 5) {
+          this.taskService.updateTaskStatus(allTasks[4].id, TaskStatus.DONE);
+        }
+        
+        console.log('📊 Tasks distributed across columns for testing');
+      }
+    }
+  }
+
+  /**
+   * Clears all tasks (for testing purposes)
+   */
+  clearAllTasks(): void {
+    const confirmed = confirm('⚠️ This will delete ALL tasks. Are you sure?');
+    if (confirmed) {
+      const allTasks = this.taskService.allTasks();
+      allTasks.forEach(task => {
+        this.taskService.deleteTask(task.id);
+      });
+      console.log('🗑️ All tasks cleared');
+    }
   }
 
   /**
