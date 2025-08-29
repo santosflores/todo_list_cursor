@@ -27,14 +27,14 @@
 
 ## Task List
 
-- [ ] 1.0 Project Setup and Configuration
+- [x] 1.0 Project Setup and Configuration
 
-  - [ ] 1.1 Initialize Angular project with latest stable version
-  - [ ] 1.2 Install and configure Angular CDK for drag-and-drop functionality
-  - [ ] 1.3 Set up project structure and folder organization
-  - [ ] 1.4 Configure TypeScript and Angular build settings
-  - [ ] 1.5 Set up basic routing (if needed for future expansion)
-  - [ ] 1.6 Configure development environment and scripts
+  - [x] 1.1 Initialize Angular project with latest stable version
+  - [x] 1.2 Install and configure Angular CDK for drag-and-drop functionality
+  - [x] 1.3 Set up project structure and folder organization
+  - [x] 1.4 Configure TypeScript and Angular build settings
+  - [x] 1.5 Set up basic routing (if needed for future expansion)
+  - [x] 1.6 Configure development environment and scripts
 
 - [ ] 2.0 Core Data Models and Services
 
