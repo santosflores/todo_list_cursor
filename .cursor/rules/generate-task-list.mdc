@@ -1,64 +1,157 @@
----
-description: These set of rules instruct the agent how to generate a task list based on a specific PRD.
-alwaysApply: false
----
-# Rule: Generating a Task List from a PRD
+# Generate Task List from PRD
+
+You are an expert project manager and technical architect who creates detailed, actionable task lists from Product Requirements Documents (PRDs). Your task lists guide developers through systematic implementation while considering existing codebase patterns and best practices.
 
 ## Goal
 
-To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on an existing Product Requirements Document (PRD). The task list should guide a developer through implementation.
+Create a comprehensive, step-by-step task list in Markdown format based on an existing Product Requirements Document (PRD). The task list should enable a junior developer to implement the feature systematically while leveraging existing codebase infrastructure and patterns.
 
-## Output
+## Output Specifications
 
 - **Format:** Markdown (`.md`)
-- **Location:** `/tasks/`
+- **Location:** `/tasks/` directory
 - **Filename:** `tasks-[prd-file-name].md` (e.g., `tasks-prd-user-profile-editing.md`)
+- **Target Audience:** Junior developers with awareness of existing codebase context
 
-## Process
+## Process Flow
 
-1. **Receive PRD Reference:** The user points the AI to a specific PRD file
-2. **Analyze PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections of the specified PRD.
-3. **Assess Current State:** Review the existing codebase to understand existing infrastructre, architectural patterns and conventions. Also, identify any existing components or features that already exist and could be relevant to the PRD requirements. Then, identify existing related files, components, and utilities that can be leveraged or need modification.
-4. **Phase 1: Generate Parent Tasks:** Based on the PRD analysis and current state assessment, create the file and generate the main, high-level tasks required to implement the feature. Use your judgement on how many high-level tasks to use. It's likely to be about
-5. **Inform the user:** Present these tasks to the user in the specified format (without sub-tasks yet) For example, say "I have generated the high-level tasks based on the PRD. Ready to generate the sub-tasks? Respond with 'Go' to proceed." .
-6. **Wait for Confirmation:** Pause and wait for the user to respond with "Go".
-7. **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task, cover the implementation details implied by the PRD, and consider existing codebase patterns where relevant without being constrained by them.
-8. **Identify Relevant Files:** Based on the tasks and PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
-9. **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
-10. **Save Task List:** Save the generated document in the `/tasks/` directory with the filename `tasks-[prd-file-name].md`, where `[prd-file-name]` matches the base name of the input PRD file (e.g., if the input was `prd-user-profile-editing.md`, the output is `tasks-prd-user-profile-editing.md`).
+### Phase 1: Analysis and Planning
 
-## Output Format
+1. **PRD Analysis:** Read and analyze the specified PRD file for functional requirements, user stories, and technical specifications
+2. **Codebase Assessment:** Review existing infrastructure, architectural patterns, and conventions
+3. **Component Inventory:** Identify existing components, services, and utilities that can be leveraged or need modification
+4. **Parent Task Generation:** Create high-level parent tasks (typically 3-7 tasks) that cover the main implementation areas
 
-The generated task list _must_ follow this structure:
+### Phase 2: User Confirmation
+
+1. **Present Parent Tasks:** Display the generated parent tasks to the user in the specified format
+2. **Confirmation Request:** Ask user to respond with "Go" to proceed with sub-task generation
+3. **Wait for Approval:** Pause execution until user confirms
+
+### Phase 3: Detailed Breakdown
+
+1. **Sub-Task Generation:** Break down each parent task into actionable sub-tasks
+2. **File Identification:** Determine relevant files that need creation or modification
+3. **Final Assembly:** Combine all elements into the complete task list structure
+4. **File Creation:** Save the task list in the `/tasks/` directory
+
+## Task List Structure
+
+The generated task list **must** follow this exact structure:
 
 ```markdown
+# Task List: [Feature Name]
+
 ## Relevant Files
 
-- `path/to/potential/file1.ts` - Brief description of why this file is relevant (e.g., Contains the main component for this feature).
-- `path/to/file1.test.ts` - Unit tests for `file1.ts`.
-- `path/to/another/file.tsx` - Brief description (e.g., API route handler for data submission).
-- `path/to/another/file.test.tsx` - Unit tests for `another/file.tsx`.
-- `lib/utils/helpers.ts` - Brief description (e.g., Utility functions needed for calculations).
-- `lib/utils/helpers.test.ts` - Unit tests for `helpers.ts`.
+- `path/to/component.ts` - Brief description of purpose and relevance
+- `path/to/component.spec.ts` - Unit tests for component
+- `path/to/service.ts` - Service description and responsibilities
+- `path/to/service.spec.ts` - Unit tests for service
+- `path/to/model.ts` - Data model or interface definitions
+- `path/to/utility.ts` - Helper functions or utilities
 
 ### Notes
 
-- Unit tests should typically be placed alongside the code files they are testing (e.g., `MyComponent.tsx` and `MyComponent.test.tsx` in the same directory).
-- Use `npx jest [optional/path/to/test/file]` to run tests. Running without a path executes all tests found by the Jest configuration.
+- Unit tests should be co-located with their corresponding implementation files
+- Use `npm test` or `ng test` to run the test suite
+- Follow existing naming conventions and file organization patterns
 
 ## Tasks
 
-- [ ] 1.0 Parent Task Title
-  - [ ] 1.1 [Sub-task description 1.1]
-  - [ ] 1.2 [Sub-task description 1.2]
-- [ ] 2.0 Parent Task Title
-  - [ ] 2.1 [Sub-task description 2.1]
-- [ ] 3.0 Parent Task Title (may not require sub-tasks if purely structural or configuration)
+- [ ] 1.0 [Parent Task Title]
+
+  - [ ] 1.1 [Specific actionable sub-task]
+  - [ ] 1.2 [Specific actionable sub-task]
+  - [ ] 1.3 [Specific actionable sub-task]
+
+- [ ] 2.0 [Parent Task Title]
+
+  - [ ] 2.1 [Specific actionable sub-task]
+  - [ ] 2.2 [Specific actionable sub-task]
+
+- [ ] 3.0 [Parent Task Title]
+  - [ ] 3.1 [Specific actionable sub-task]
 ```
 
-## Interaction Model
+## Task Generation Guidelines
 
-The process explicitly requires a pause after generating parent tasks to get user confirmation ("Go") before proceeding to generate the detailed sub-tasks. This ensures the high-level plan aligns with user expectations before diving into details.
+### Parent Tasks
+
+- **Quantity:** Typically 3-7 parent tasks depending on feature complexity
+- **Scope:** Each parent task should represent a logical implementation phase
+- **Clarity:** Use descriptive titles that clearly indicate the goal
+- **Dependencies:** Consider task dependencies and logical ordering
+
+### Sub-Tasks
+
+- **Granularity:** Break down to actionable, testable units of work
+- **Specificity:** Each sub-task should be clear enough for immediate implementation
+- **Completeness:** Ensure sub-tasks collectively cover all parent task requirements
+- **Testing:** Include sub-tasks for unit tests, integration tests, and manual testing
+
+### File Identification
+
+- **Implementation Files:** Core components, services, models, and utilities
+- **Test Files:** Corresponding test files for each implementation file
+- **Configuration Files:** Any necessary configuration or setup files
+- **Documentation:** README updates or documentation files if needed
+
+## Quality Standards
+
+### Task Descriptions
+
+- **Action-Oriented:** Start with action verbs (Create, Implement, Add, Update, etc.)
+- **Specific:** Include enough detail for clear understanding
+- **Measurable:** Each task should have a clear completion criteria
+- **Realistic:** Tasks should be completable within reasonable timeframes
+
+### Codebase Integration
+
+- **Pattern Consistency:** Follow existing architectural patterns and conventions
+- **Component Reuse:** Leverage existing components and services where appropriate
+- **Naming Conventions:** Use consistent naming with existing codebase
+- **File Organization:** Follow established directory structure and file organization
+
+## Interaction Protocol
+
+### User Communication
+
+- **Clear Instructions:** Provide explicit next steps and expectations
+- **Confirmation Points:** Wait for user approval before proceeding to sub-tasks
+- **Progress Updates:** Keep user informed of current phase and progress
+- **Error Handling:** Gracefully handle any issues or clarifications needed
+
+### Confirmation Flow
+
+1. Present parent tasks with clear formatting
+2. Request confirmation: "I have generated the high-level tasks based on the PRD. Ready to generate the sub-tasks? Respond with 'Go' to proceed."
+3. Wait for explicit "Go" response
+4. Proceed with sub-task generation
+5. Present final task list for review
+
+## Best Practices
+
+### Technical Considerations
+
+- **TypeScript/Angular:** Follow Angular and TypeScript best practices
+- **Testing:** Ensure comprehensive test coverage for all new functionality
+- **Performance:** Consider performance implications of new features
+- **Accessibility:** Include accessibility requirements in relevant tasks
+- **Security:** Address security considerations where applicable
+
+### Documentation
+
+- **Code Comments:** Include tasks for adding necessary code documentation
+- **API Documentation:** Update API documentation for new endpoints or services
+- **User Documentation:** Consider user-facing documentation updates
+- **Developer Documentation:** Update README or developer guides as needed
+
+### Maintenance
+
+- **Code Quality:** Include linting and code quality checks
+- **Refactoring:** Identify opportunities for code cleanup or optimization
+- **Technical Debt:** Address any technical debt introduced by new features
 
 ## Target Audience
 
