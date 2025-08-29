@@ -109,7 +109,7 @@ import { TaskStatusType } from '../../models/task-status.model';
               <button
                 type="submit"
                 class="btn btn-primary"
-                [disabled]="!isFormValid"
+                [disabled]="!isFormValid()"
               >
                 {{ buttonText() }}
               </button>
@@ -506,8 +506,10 @@ export class TaskEditModalComponent {
       description: this.formDescription(),
       status: this.formStatus()
     });
+    console.log('TaskEditModal: isFormValid result:', this.isFormValid());
+    console.log('TaskEditModal: current task:', this.task());
 
-    if (!this.isFormValid) {
+    if (!this.isFormValid()) {
       console.log('TaskEditModal: Form validation failed');
       return;
     }
