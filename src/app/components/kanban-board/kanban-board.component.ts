@@ -22,6 +22,7 @@ import {
   CdkDragExit,
 } from '@angular/cdk/drag-drop';
 import { TaskCardComponent } from '../task-card/task-card.component';
+import { TaskEditModalComponent } from '../task-edit-modal/task-edit-modal.component';
 import { TaskService } from '../../services/task.service';
 import { Task } from '../../models/task.model';
 import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
@@ -32,6 +33,7 @@ import { DragDropTestRunner } from './drag-drop-test-runner';
   imports: [
     CommonModule,
     TaskCardComponent,
+    TaskEditModalComponent,
     CdkDropListGroup,
     CdkDropList,
     CdkDrag,
@@ -50,6 +52,10 @@ export class KanbanBoardComponent {
   isDragging = signal(false);
   dragSourceColumn = signal<string | null>(null);
   dragOverColumn = signal<string | null>(null);
+
+  // Modal state
+  isModalOpen = signal(false);
+  editingTask = signal<Task | null>(null);
 
   // Test runner instance
   private testRunner: DragDropTestRunner;
@@ -145,6 +151,77 @@ export class KanbanBoardComponent {
       } else {
         // TODO: Show error toast notification
         console.error('Failed to delete task');
+      }
+    }
+  }
+
+  /**
+   * Handles task updates from inline editing
+   */
+  onUpdateTask(event: { id: string; updates: Partial<Pick<Task, 'title' | 'description'>> }): void {
+    try {
+      const updatedTask = this.taskService.updateTask(event.id, event.updates);
+      console.log('Task updated successfully:', updatedTask);
+      // TODO: Show success toast notification
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      // TODO: Show error toast notification
+      if (error instanceof Error) {
+        alert(`Failed to update task: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Opens the edit modal for a specific task
+   */
+  openEditModal(task: Task): void {
+    this.editingTask.set(task);
+    this.isModalOpen.set(true);
+  }
+
+  /**
+   * Opens the create modal for a new task
+   */
+  openCreateModal(): void {
+    this.editingTask.set(null);
+    this.isModalOpen.set(true);
+  }
+
+  /**
+   * Closes the edit modal
+   */
+  closeEditModal(): void {
+    this.isModalOpen.set(false);
+    this.editingTask.set(null);
+  }
+
+  /**
+   * Handles saving from the modal (both create and edit)
+   */
+  onModalSave(event: { task: Task | null; updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> }): void {
+    try {
+      if (event.task) {
+        // Editing existing task
+        const updatedTask = this.taskService.updateTask(event.task.id, event.updates);
+        console.log('Task updated successfully:', updatedTask);
+        // TODO: Show success toast notification
+      } else {
+        // Creating new task
+        const newTask = this.taskService.createTask(
+          event.updates.title!,
+          event.updates.description
+        );
+        console.log('Task created successfully:', newTask);
+        // TODO: Show success toast notification
+      }
+      
+      this.closeEditModal();
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      // TODO: Show error toast notification
+      if (error instanceof Error) {
+        alert(`Failed to save task: ${error.message}`);
       }
     }
   }
