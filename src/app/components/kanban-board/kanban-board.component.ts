@@ -1,6 +1,26 @@
-import { Component, ChangeDetectionStrategy, inject, computed, signal, ElementRef } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+  signal,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CdkDragDrop, CdkDrag, CdkDropList, CdkDropListGroup, moveItemInArray, transferArrayItem, CdkDragStart, CdkDragEnd, CdkDragEnter, CdkDragExit } from '@angular/cdk/drag-drop';
+import {
+  CdkDragDrop,
+  CdkDrag,
+  CdkDropList,
+  CdkDropListGroup,
+  CdkDragPlaceholder,
+  CdkDragPreview,
+  moveItemInArray,
+  transferArrayItem,
+  CdkDragStart,
+  CdkDragEnd,
+  CdkDragEnter,
+  CdkDragExit,
+} from '@angular/cdk/drag-drop';
 import { TaskCardComponent } from '../task-card/task-card.component';
 import { TaskService } from '../../services/task.service';
 import { Task } from '../../models/task.model';
@@ -9,15 +29,23 @@ import { DragDropTestRunner } from './drag-drop-test-runner';
 
 @Component({
   selector: 'app-kanban-board',
-  imports: [CommonModule, TaskCardComponent, CdkDropListGroup, CdkDropList, CdkDrag],
+  imports: [
+    CommonModule,
+    TaskCardComponent,
+    CdkDropListGroup,
+    CdkDropList,
+    CdkDrag,
+    CdkDragPlaceholder,
+    CdkDragPreview,
+  ],
   templateUrl: './kanban-board.component.html',
   styleUrl: './kanban-board.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KanbanBoardComponent {
   private taskService = inject(TaskService);
   private elementRef = inject(ElementRef);
-  
+
   // Visual feedback signals
   isDragging = signal(false);
   dragSourceColumn = signal<string | null>(null);
@@ -29,54 +57,54 @@ export class KanbanBoardComponent {
   constructor() {
     // Validate data integrity on component initialization
     this.validateDataIntegrityOnInit();
-    
+
     // Initialize test runner
     this.testRunner = new DragDropTestRunner(this, this.taskService);
-    
+
     // Expose to global scope for browser console access
     if (typeof window !== 'undefined') {
       window.dragDropTestRunner = this.testRunner;
     }
   }
-  
+
   // Column definitions
   readonly columns = [
-    { 
+    {
       id: TaskStatus.BACKLOG,
       title: 'Backlog',
-      description: 'Tasks to be started'
+      description: 'Tasks to be started',
     },
-    { 
+    {
       id: TaskStatus.IN_PROGRESS,
-      title: 'In Progress', 
-      description: 'Tasks currently being worked on'
+      title: 'In Progress',
+      description: 'Tasks currently being worked on',
     },
-    { 
+    {
       id: TaskStatus.DONE,
       title: 'Done',
-      description: 'Completed tasks'
-    }
+      description: 'Completed tasks',
+    },
   ];
 
   // Get all tasks from service
   allTasks = this.taskService.allTasks;
 
   // Computed signals for tasks grouped by status
-  backlogTasks = computed(() => 
+  backlogTasks = computed(() =>
     this.allTasks()
-      .filter(task => task.status === TaskStatus.BACKLOG)
+      .filter((task) => task.status === TaskStatus.BACKLOG)
       .sort((a, b) => a.order - b.order)
   );
 
-  inProgressTasks = computed(() => 
+  inProgressTasks = computed(() =>
     this.allTasks()
-      .filter(task => task.status === TaskStatus.IN_PROGRESS)
+      .filter((task) => task.status === TaskStatus.IN_PROGRESS)
       .sort((a, b) => a.order - b.order)
   );
 
-  doneTasks = computed(() => 
+  doneTasks = computed(() =>
     this.allTasks()
-      .filter(task => task.status === TaskStatus.DONE)
+      .filter((task) => task.status === TaskStatus.DONE)
       .sort((a, b) => a.order - b.order)
   );
 
@@ -104,11 +132,11 @@ export class KanbanBoardComponent {
     if (!task) {
       return;
     }
-    
+
     const confirmed = confirm(
       `Are you sure you want to delete the task "${task.title}"?\n\nThis action cannot be undone.`
     );
-    
+
     if (confirmed) {
       const success = this.taskService.deleteTask(taskId);
       if (success) {
@@ -127,7 +155,7 @@ export class KanbanBoardComponent {
   onDrop(event: CdkDragDrop<Task[]>): void {
     // Show loading state (optional)
     const draggedTask = event.previousContainer.data[event.previousIndex];
-    
+
     if (event.previousContainer === event.container) {
       // Reordering within the same column
       this.handleReorderOperation(event, draggedTask);
@@ -140,17 +168,20 @@ export class KanbanBoardComponent {
   /**
    * Handles reordering tasks within the same column
    */
-  private handleReorderOperation(event: CdkDragDrop<Task[]>, draggedTask: Task): void {
+  private handleReorderOperation(
+    event: CdkDragDrop<Task[]>,
+    draggedTask: Task
+  ): void {
     const tasks = [...event.container.data];
     const status = this.getStatusFromContainerId(event.container.id);
-    
+
     // Optimistically update the UI
     moveItemInArray(tasks, event.previousIndex, event.currentIndex);
-    
+
     // Calculate affected tasks for atomic update
     const affectedTasks = tasks.map((task, index) => ({
       id: task.id,
-      newOrder: index
+      newOrder: index,
     }));
 
     // Perform atomic persistence
@@ -158,7 +189,7 @@ export class KanbanBoardComponent {
       type: 'reorder',
       taskId: draggedTask.id,
       newOrder: event.currentIndex,
-      affectedTasks
+      affectedTasks,
     });
 
     if (!result.success) {
@@ -166,19 +197,26 @@ export class KanbanBoardComponent {
       this.revertDropOperation();
       this.showErrorMessage(`Failed to reorder task: ${result.error}`);
     } else {
-      this.showSuccessMessage(`Task "${draggedTask.title}" reordered successfully`);
+      this.showSuccessMessage(
+        `Task "${draggedTask.title}" reordered successfully`
+      );
     }
   }
 
   /**
    * Handles moving tasks between different columns
    */
-  private handleMoveOperation(event: CdkDragDrop<Task[]>, draggedTask: Task): void {
+  private handleMoveOperation(
+    event: CdkDragDrop<Task[]>,
+    draggedTask: Task
+  ): void {
     const previousTasks = [...event.previousContainer.data];
     const currentTasks = [...event.container.data];
     const newStatus = this.getStatusFromContainerId(event.container.id);
-    const previousStatus = this.getStatusFromContainerId(event.previousContainer.id);
-    
+    const previousStatus = this.getStatusFromContainerId(
+      event.previousContainer.id
+    );
+
     // Optimistically update the UI
     transferArrayItem(
       previousTasks,
@@ -189,12 +227,12 @@ export class KanbanBoardComponent {
 
     // Calculate all affected tasks for atomic update
     const affectedTasks: Array<{ id: string; newOrder: number }> = [];
-    
+
     // Add affected tasks from current column
     currentTasks.forEach((task, index) => {
       affectedTasks.push({ id: task.id, newOrder: index });
     });
-    
+
     // Add affected tasks from previous column
     previousTasks.forEach((task, index) => {
       affectedTasks.push({ id: task.id, newOrder: index });
@@ -206,7 +244,7 @@ export class KanbanBoardComponent {
       taskId: draggedTask.id,
       newStatus,
       newOrder: event.currentIndex,
-      affectedTasks
+      affectedTasks,
     });
 
     if (!result.success) {
@@ -217,7 +255,7 @@ export class KanbanBoardComponent {
       const statusNames = {
         [TaskStatus.BACKLOG]: 'Backlog',
         [TaskStatus.IN_PROGRESS]: 'In Progress',
-        [TaskStatus.DONE]: 'Done'
+        [TaskStatus.DONE]: 'Done',
       };
       this.showSuccessMessage(
         `Task "${draggedTask.title}" moved to ${statusNames[newStatus]} successfully`
@@ -242,13 +280,17 @@ export class KanbanBoardComponent {
     const validation = this.taskService.validateTaskIntegrity();
     if (!validation.isValid) {
       console.warn('Data integrity issues detected:', validation.errors);
-      
+
       // Attempt to repair automatically
       const repaired = this.taskService.repairTaskIntegrity();
       if (repaired) {
-        this.showSuccessMessage('Data integrity issues were automatically repaired');
+        this.showSuccessMessage(
+          'Data integrity issues were automatically repaired'
+        );
       } else {
-        this.showErrorMessage('Critical data integrity issues detected. Please refresh the page.');
+        this.showErrorMessage(
+          'Critical data integrity issues detected. Please refresh the page.'
+        );
       }
     }
   }
@@ -267,7 +309,7 @@ export class KanbanBoardComponent {
   private showErrorMessage(message: string): void {
     console.error('Error:', message);
     // TODO: Integrate with ToastService when implemented
-    
+
     // For now, show a simple alert for critical errors
     if (message.includes('Critical')) {
       alert(message);
@@ -281,12 +323,17 @@ export class KanbanBoardComponent {
     try {
       const validation = this.taskService.validateTaskIntegrity();
       if (!validation.isValid) {
-        console.warn('Data integrity issues found on initialization:', validation.errors);
-        
+        console.warn(
+          'Data integrity issues found on initialization:',
+          validation.errors
+        );
+
         // Attempt automatic repair
         const repaired = this.taskService.repairTaskIntegrity();
         if (repaired) {
-          console.log('Data integrity issues automatically repaired on startup');
+          console.log(
+            'Data integrity issues automatically repaired on startup'
+          );
         } else {
           console.error('Failed to repair data integrity issues on startup');
         }
@@ -310,13 +357,13 @@ export class KanbanBoardComponent {
     const tasksByStatus = {
       [TaskStatus.BACKLOG]: this.backlogTasks().length,
       [TaskStatus.IN_PROGRESS]: this.inProgressTasks().length,
-      [TaskStatus.DONE]: this.doneTasks().length
+      [TaskStatus.DONE]: this.doneTasks().length,
     };
 
     return {
       totalTasks: allTasks.length,
       tasksByStatus,
-      lastUpdateTime: new Date().toISOString()
+      lastUpdateTime: new Date().toISOString(),
     };
   }
 
@@ -330,7 +377,7 @@ export class KanbanBoardComponent {
       metrics: this.getDragDropMetrics(),
       integrity: this.taskService.validateTaskIntegrity(),
       storage: this.taskService.getStorageInfo(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     return JSON.stringify(state, null, 2);
@@ -342,39 +389,39 @@ export class KanbanBoardComponent {
    */
   testPersistence(): void {
     console.group('🧪 Testing Kanban Persistence & State Management');
-    
+
     try {
       // Test 1: Data Integrity Validation
       console.log('📋 Test 1: Data Integrity Validation');
       const integrity = this.taskService.validateTaskIntegrity();
       console.log('Integrity check:', integrity);
-      
+
       // Test 2: Storage Information
       console.log('💾 Test 2: Storage Information');
       const storage = this.taskService.getStorageInfo();
       console.log('Storage info:', storage);
-      
+
       // Test 3: Export Current State
       console.log('📤 Test 3: Export Current State');
       const state = this.exportKanbanState();
       console.log('Current state exported (check next log)');
       console.log(JSON.parse(state));
-      
+
       // Test 4: Metrics
       console.log('📊 Test 4: Performance Metrics');
       const metrics = this.getDragDropMetrics();
       console.log('Drag & Drop Metrics:', metrics);
-      
+
       // Test 5: Performance Monitoring
       console.log('⚡ Test 5: Performance Monitoring');
       const performance = this.taskService.getPerformanceMetrics();
       console.log('Performance Metrics:', performance);
-      
+
       console.log('✅ All persistence tests completed successfully');
     } catch (error) {
       console.error('❌ Persistence test failed:', error);
     }
-    
+
     console.groupEnd();
   }
 
@@ -383,22 +430,22 @@ export class KanbanBoardComponent {
    */
   simulateErrorScenarios(): void {
     console.group('🚨 Testing Error Scenarios');
-    
+
     console.warn('This will test error handling - some errors are expected');
-    
+
     try {
       // Test invalid task operations
       console.log('Testing invalid operations...');
-      
+
       // These should be handled gracefully
       this.showErrorMessage('Test error message');
       this.showSuccessMessage('Test success message');
-      
+
       console.log('✅ Error scenario testing completed');
     } catch (error) {
       console.error('❌ Error scenario test failed:', error);
     }
-    
+
     console.groupEnd();
   }
 
@@ -415,56 +462,68 @@ export class KanbanBoardComponent {
    */
   quickDragDropTest(): void {
     console.group('🚀 Quick Drag & Drop Smoke Test');
-    
+
     try {
       // Test 1: Basic component state
       console.log('1. Testing component state...');
       const hasCorrectColumns = this.columns.length === 3;
       console.log(`✅ Columns: ${hasCorrectColumns ? 'OK' : 'FAIL'}`);
-      
+
       // Test 2: Task distribution
       console.log('2. Testing task distribution...');
       const backlogCount = this.getTasksForColumn(TaskStatus.BACKLOG).length;
-      const inProgressCount = this.getTasksForColumn(TaskStatus.IN_PROGRESS).length;
+      const inProgressCount = this.getTasksForColumn(
+        TaskStatus.IN_PROGRESS
+      ).length;
       const doneCount = this.getTasksForColumn(TaskStatus.DONE).length;
-      console.log(`   Backlog: ${backlogCount}, In Progress: ${inProgressCount}, Done: ${doneCount}`);
-      
+      console.log(
+        `   Backlog: ${backlogCount}, In Progress: ${inProgressCount}, Done: ${doneCount}`
+      );
+
       // Test 3: Visual feedback state
       console.log('3. Testing visual feedback...');
       const initialDragState = this.isDragging();
       this.isDragging.set(true);
       const updatedDragState = this.isDragging();
       this.isDragging.set(false);
-      console.log(`✅ Visual feedback: ${!initialDragState && updatedDragState ? 'OK' : 'FAIL'}`);
-      
+      console.log(
+        `✅ Visual feedback: ${
+          !initialDragState && updatedDragState ? 'OK' : 'FAIL'
+        }`
+      );
+
       // Test 4: Status mapping
       console.log('4. Testing status mapping...');
-      const mappingCorrect = this.getDropListId(TaskStatus.BACKLOG) === 'backlog-list' &&
-                            this.getDropListId(TaskStatus.IN_PROGRESS) === 'in-progress-list' &&
-                            this.getDropListId(TaskStatus.DONE) === 'done-list';
+      const mappingCorrect =
+        this.getDropListId(TaskStatus.BACKLOG) === 'backlog-list' &&
+        this.getDropListId(TaskStatus.IN_PROGRESS) === 'in-progress-list' &&
+        this.getDropListId(TaskStatus.DONE) === 'done-list';
       console.log(`✅ Status mapping: ${mappingCorrect ? 'OK' : 'FAIL'}`);
-      
+
       // Test 5: Service integration
       console.log('5. Testing service integration...');
       const integrity = this.taskService.validateTaskIntegrity();
-      console.log(`✅ Data integrity: ${integrity.isValid ? 'OK' : 'ISSUES DETECTED'}`);
+      console.log(
+        `✅ Data integrity: ${integrity.isValid ? 'OK' : 'ISSUES DETECTED'}`
+      );
       if (!integrity.isValid) {
         console.warn('Integrity issues:', integrity.errors);
       }
-      
+
       // Test 6: Performance metrics
       console.log('6. Testing performance metrics...');
       const metrics = this.taskService.getPerformanceMetrics();
       console.log(`   Operations: ${JSON.stringify(metrics.operations)}`);
       console.log(`   Success rate: ${metrics.successRate}%`);
-      
+
       console.log('\n🎉 Quick smoke test completed successfully!');
-      console.log('💡 For comprehensive testing, run: window.dragDropTestRunner.runAllTests()');
-      
+      console.log(
+        '💡 For comprehensive testing, run: window.dragDropTestRunner.runAllTests()'
+      );
     } catch (error) {
       console.error('❌ Quick test failed:', error);
     }
-    
+
     console.groupEnd();
   }
 
@@ -473,7 +532,7 @@ export class KanbanBoardComponent {
    */
   createTestTasks(count: number = 6): void {
     console.log(`🏗️ Creating ${count} test tasks...`);
-    
+
     const taskNames = [
       'Implement user authentication',
       'Design dashboard layout',
@@ -484,9 +543,9 @@ export class KanbanBoardComponent {
       'Fix responsive design issues',
       'Add error logging',
       'Implement caching layer',
-      'Review security protocols'
+      'Review security protocols',
     ];
-    
+
     const descriptions = [
       'Set up JWT authentication with refresh tokens',
       'Create modern, responsive dashboard interface',
@@ -497,25 +556,31 @@ export class KanbanBoardComponent {
       'Fix mobile responsiveness issues',
       'Implement centralized error logging',
       'Add Redis caching for performance',
-      'Audit and improve security measures'
+      'Audit and improve security measures',
     ];
-    
+
     for (let i = 0; i < Math.min(count, taskNames.length); i++) {
       this.taskService.createTask(taskNames[i], descriptions[i]);
     }
-    
+
     console.log(`✅ Created ${Math.min(count, taskNames.length)} test tasks`);
-    
+
     // Distribute some tasks to different columns for testing
     if (count >= 3) {
       const allTasks = this.taskService.allTasks();
       if (allTasks.length >= 3) {
         // Move some tasks to in-progress
-        this.taskService.updateTaskStatus(allTasks[1].id, TaskStatus.IN_PROGRESS);
+        this.taskService.updateTaskStatus(
+          allTasks[1].id,
+          TaskStatus.IN_PROGRESS
+        );
         if (allTasks.length >= 4) {
-          this.taskService.updateTaskStatus(allTasks[3].id, TaskStatus.IN_PROGRESS);
+          this.taskService.updateTaskStatus(
+            allTasks[3].id,
+            TaskStatus.IN_PROGRESS
+          );
         }
-        
+
         // Move some tasks to done
         if (allTasks.length >= 2) {
           this.taskService.updateTaskStatus(allTasks[2].id, TaskStatus.DONE);
@@ -523,7 +588,7 @@ export class KanbanBoardComponent {
         if (allTasks.length >= 5) {
           this.taskService.updateTaskStatus(allTasks[4].id, TaskStatus.DONE);
         }
-        
+
         console.log('📊 Tasks distributed across columns for testing');
       }
     }
@@ -536,7 +601,7 @@ export class KanbanBoardComponent {
     const confirmed = confirm('⚠️ This will delete ALL tasks. Are you sure?');
     if (confirmed) {
       const allTasks = this.taskService.allTasks();
-      allTasks.forEach(task => {
+      allTasks.forEach((task) => {
         this.taskService.deleteTask(task.id);
       });
       console.log('🗑️ All tasks cleared');
@@ -580,16 +645,16 @@ export class KanbanBoardComponent {
    */
   onDragStart(event: CdkDragStart): void {
     this.isDragging.set(true);
-    
+
     // Find the source column
     const draggedTask = event.source.data;
     if (draggedTask) {
       this.dragSourceColumn.set(this.getDropListId(draggedTask.status));
     }
-    
+
     // Add dragging class to the board
     this.elementRef.nativeElement.classList.add('is-dragging');
-    
+
     // Add source column class
     const sourceColumn = this.getColumnElement(this.dragSourceColumn());
     if (sourceColumn) {
@@ -604,12 +669,13 @@ export class KanbanBoardComponent {
     this.isDragging.set(false);
     this.dragSourceColumn.set(null);
     this.dragOverColumn.set(null);
-    
+
     // Remove dragging class from the board
     this.elementRef.nativeElement.classList.remove('is-dragging');
-    
+
     // Remove all drag-related classes from columns
-    const columns = this.elementRef.nativeElement.querySelectorAll('.kanban-column');
+    const columns =
+      this.elementRef.nativeElement.querySelectorAll('.kanban-column');
     columns.forEach((column: HTMLElement) => {
       column.classList.remove('drag-source', 'drag-over');
     });
@@ -621,7 +687,7 @@ export class KanbanBoardComponent {
   onDragEnter(event: CdkDragEnter): void {
     const targetListId = event.container.id;
     this.dragOverColumn.set(targetListId);
-    
+
     // Add drag-over class to the target column
     const targetColumn = this.getColumnElement(targetListId);
     if (targetColumn) {
@@ -634,13 +700,13 @@ export class KanbanBoardComponent {
    */
   onDragExit(event: CdkDragExit): void {
     const exitedListId = event.container.id;
-    
+
     // Remove drag-over class from the exited column
     const exitedColumn = this.getColumnElement(exitedListId);
     if (exitedColumn) {
       exitedColumn.classList.remove('drag-over');
     }
-    
+
     // Clear drag over column if it matches
     if (this.dragOverColumn() === exitedListId) {
       this.dragOverColumn.set(null);
@@ -652,8 +718,10 @@ export class KanbanBoardComponent {
    */
   private getColumnElement(dropListId: string | null): HTMLElement | null {
     if (!dropListId) return null;
-    
-    const dropList = this.elementRef.nativeElement.querySelector(`[id="${dropListId}"]`);
+
+    const dropList = this.elementRef.nativeElement.querySelector(
+      `[id="${dropListId}"]`
+    );
     return dropList?.closest('.kanban-column') || null;
   }
 

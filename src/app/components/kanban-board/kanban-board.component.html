@@ -1,81 +1,84 @@
-<div class="kanban-board" 
-     cdkDropListGroup
-     [class.is-dragging]="isDragging()">
+<div class="kanban-board" cdkDropListGroup [class.is-dragging]="isDragging()">
   <div class="kanban-columns">
     @for (column of columns; track column.id) {
-      <div class="kanban-column"
-           [class.drag-source]="isSourceColumn(column.id)"
-           [class.drag-over]="isDragOverColumn(column.id)">
-        <div class="column-header">
-          <h3 class="column-title">{{ column.title }}</h3>
-          <span class="task-count">{{ getTasksForColumn(column.id).length }}</span>
-          @if (isDragging() && !isSourceColumn(column.id)) {
-            <div class="drop-indicator">
-              <span class="drop-hint">Drop here</span>
-            </div>
-          }
+    <div
+      class="kanban-column"
+      [class.drag-source]="isSourceColumn(column.id)"
+      [class.drag-over]="isDragOverColumn(column.id)"
+    >
+      <div class="column-header">
+        <h3 class="column-title">{{ column.title }}</h3>
+        <span class="task-count">{{
+          getTasksForColumn(column.id).length
+        }}</span>
+        @if (isDragging() && !isSourceColumn(column.id)) {
+        <div class="drop-indicator">
+          <span class="drop-hint">Drop here</span>
         </div>
-        <p class="column-description">{{ column.description }}</p>
-        
-        <div class="column-content">
-          <div 
-            class="task-list"
-            cdkDropList
-            [id]="getDropListId(column.id)"
-            [cdkDropListData]="getTasksForColumn(column.id)"
-            (cdkDropListDropped)="onDrop($event)"
-            (cdkDropListEntered)="onDragEnter($event)"
-            (cdkDropListExited)="onDragExit($event)">
-            @if (getTasksForColumn(column.id).length === 0) {
-              <div class="empty-column"
-                   [class.highlight-drop]="isDragging() && isDragOverColumn(column.id)">
-                @if (isDragging()) {
-                  <div class="empty-drop-zone">
-                    <div class="drop-zone-icon">📋</div>
-                    <p>Drop your task here</p>
-                  </div>
-                } @else {
-                  <p>No tasks in {{ column.title.toLowerCase() }}</p>
-                }
-              </div>
+        }
+      </div>
+      <p class="column-description">{{ column.description }}</p>
+
+      <div class="column-content">
+        <div
+          class="task-list"
+          cdkDropList
+          [id]="getDropListId(column.id)"
+          [cdkDropListData]="getTasksForColumn(column.id)"
+          (cdkDropListDropped)="onDrop($event)"
+          (cdkDropListEntered)="onDragEnter($event)"
+          (cdkDropListExited)="onDragExit($event)"
+        >
+          @if (getTasksForColumn(column.id).length === 0) {
+          <div
+            class="empty-column"
+            [class.highlight-drop]="isDragging() && isDragOverColumn(column.id)"
+          >
+            @if (isDragging()) {
+            <div class="empty-drop-zone">
+              <div class="drop-zone-icon">📋</div>
+              <p>Drop your task here</p>
+            </div>
             } @else {
-              @for (task of getTasksForColumn(column.id); track task.id) {
-                <div cdkDrag 
-                     class="task-item"
-                     [cdkDragData]="task"
-                     (cdkDragStarted)="onDragStart($event)"
-                     (cdkDragEnded)="onDragEnd($event)">
-                  <app-task-card 
-                    [task]="task"
-                    (deleteTask)="onDeleteTask($event)" />
-                  
-                  <!-- Custom drag preview -->
-                  <div *cdkDragPreview class="drag-preview">
-                    <div class="preview-card">
-                      <div class="preview-status">{{ column.title }}</div>
-                      <h4>{{ task.title }}</h4>
-                      @if (task.description) {
-                        <p>{{ task.description }}</p>
-                      }
-                      <div class="preview-timestamp">
-                        Created {{ task.createdAt | date:'short' }}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Drag placeholder -->
-                  <div *cdkDragPlaceholder class="drag-placeholder">
-                    <div class="placeholder-content">
-                      <div class="placeholder-icon">⬇️</div>
-                      <span>Drop task here</span>
-                    </div>
-                  </div>
-                </div>
-              }
+            <p>No tasks in {{ column.title.toLowerCase() }}</p>
             }
           </div>
+          } @else { @for (task of getTasksForColumn(column.id); track task.id) {
+          <div
+            cdkDrag
+            class="task-item"
+            [cdkDragData]="task"
+            (cdkDragStarted)="onDragStart($event)"
+            (cdkDragEnded)="onDragEnd($event)"
+          >
+            <app-task-card [task]="task" (deleteTask)="onDeleteTask($event)" />
+
+            <!-- Custom drag preview -->
+            <div *cdkDragPreview class="drag-preview">
+              <div class="preview-card">
+                <div class="preview-status">{{ column.title }}</div>
+                <h4>{{ task.title }}</h4>
+                @if (task.description) {
+                <p>{{ task.description }}</p>
+                }
+                <div class="preview-timestamp">
+                  Created {{ task.createdAt | date : "short" }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Drag placeholder -->
+            <div *cdkDragPlaceholder class="drag-placeholder">
+              <div class="placeholder-content">
+                <div class="placeholder-icon">⬇️</div>
+                <span>Drop task here</span>
+              </div>
+            </div>
+          </div>
+          } }
         </div>
       </div>
+    </div>
     }
   </div>
 </div>

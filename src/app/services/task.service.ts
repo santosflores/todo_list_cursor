@@ -11,10 +11,10 @@ import { TaskStatus, TaskStatusType } from '../models/task-status.model';
 export class TaskService {
   private readonly STORAGE_KEY = 'daily-tasks';
   private readonly PERFORMANCE_KEY = 'daily-tasks-performance';
-  
+
   // Signal for all tasks
   private _tasks = signal<Task[]>([]);
-  
+
   // Performance monitoring
   private performanceMetrics = {
     saveOperations: 0,
@@ -25,23 +25,23 @@ export class TaskService {
     lastOperationTime: 0,
     errors: 0
   };
-  
+
   // Computed signals for tasks by status
-  readonly backlogTasks = computed(() => 
+  readonly backlogTasks = computed(() =>
     this._tasks().filter(task => task.status === TaskStatus.BACKLOG)
       .sort((a, b) => a.order - b.order)
   );
-  
-  readonly inProgressTasks = computed(() => 
+
+  readonly inProgressTasks = computed(() =>
     this._tasks().filter(task => task.status === TaskStatus.IN_PROGRESS)
       .sort((a, b) => a.order - b.order)
   );
-  
-  readonly doneTasks = computed(() => 
+
+  readonly doneTasks = computed(() =>
     this._tasks().filter(task => task.status === TaskStatus.DONE)
       .sort((a, b) => a.order - b.order)
   );
-  
+
   readonly allTasks = computed(() => this._tasks());
 
   constructor() {
@@ -56,11 +56,11 @@ export class TaskService {
     if (!title.trim()) {
       throw new Error('Task title is required');
     }
-    
+
     if (title.length > 128) {
       throw new Error('Task title cannot exceed 128 characters');
     }
-    
+
     if (description && description.length > 256) {
       throw new Error('Task description cannot exceed 256 characters');
     }
@@ -76,7 +76,7 @@ export class TaskService {
 
     this._tasks.update(tasks => [...tasks, newTask]);
     this.saveTasks();
-    
+
     return newTask;
   }
 
@@ -109,14 +109,14 @@ export class TaskService {
       throw new Error('Task description cannot exceed 256 characters');
     }
 
-    this._tasks.update(tasks => 
-      tasks.map(t => 
-        t.id === id 
+    this._tasks.update(tasks =>
+      tasks.map(t =>
+        t.id === id
           ? { ...t, ...updates, title: updates.title?.trim() || t.title, description: updates.description?.trim() }
           : t
       )
     );
-    
+
     this.saveTasks();
     return this.getTask(id)!;
   }
@@ -127,12 +127,12 @@ export class TaskService {
   deleteTask(id: string): boolean {
     const initialLength = this._tasks().length;
     this._tasks.update(tasks => tasks.filter(task => task.id !== id));
-    
+
     if (this._tasks().length < initialLength) {
       this.saveTasks();
       return true;
     }
-    
+
     return false;
   }
 
@@ -150,25 +150,25 @@ export class TaskService {
    */
   private saveTasks(): void {
     const startTime = performance.now();
-    
+
     try {
       const tasksData = this._tasks().map(task => ({
         ...task,
         createdAt: task.createdAt.toISOString()
       }));
-      
+
       const dataString = JSON.stringify(tasksData);
-      
+
       // Check localStorage quota before saving
       if (this.checkStorageQuota(dataString)) {
         localStorage.setItem(this.STORAGE_KEY, dataString);
-        
+
         // Update performance metrics
         const duration = performance.now() - startTime;
         this.performanceMetrics.saveOperations++;
         this.performanceMetrics.totalPersistenceTime += duration;
         this.performanceMetrics.lastOperationTime = Date.now();
-        
+
         console.log(`Successfully saved ${tasksData.length} tasks to localStorage in ${duration.toFixed(2)}ms`);
       } else {
         throw new Error('Insufficient localStorage space');
@@ -176,7 +176,7 @@ export class TaskService {
     } catch (error) {
       this.performanceMetrics.errors++;
       console.error('Failed to save tasks to localStorage:', error);
-      
+
       if (error instanceof Error) {
         if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
           throw new Error('Storage quota exceeded. Please clear some browser data and try again.');
@@ -184,7 +184,7 @@ export class TaskService {
           throw new Error('Not enough storage space. Please free up some space and try again.');
         }
       }
-      
+
       throw new Error('Failed to save tasks. Please check your browser storage settings.');
     }
   }
@@ -201,11 +201,11 @@ export class TaskService {
           currentUsage += localStorage[key].length + key.length;
         }
       }
-      
+
       // Estimate available space (most browsers have ~5-10MB limit)
       const estimatedLimit = 5 * 1024 * 1024; // 5MB in bytes
       const dataSize = dataString.length * 2; // UTF-16 encoding
-      
+
       return (currentUsage + dataSize) < (estimatedLimit * 0.9); // Use 90% of estimated limit
     } catch (error) {
       console.warn('Could not check storage quota:', error);
@@ -218,7 +218,7 @@ export class TaskService {
    */
   private loadTasks(): void {
     const startTime = performance.now();
-    
+
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
@@ -228,12 +228,12 @@ export class TaskService {
           createdAt: new Date(taskData.createdAt)
         }));
         this._tasks.set(tasks);
-        
+
         // Update performance metrics
         const duration = performance.now() - startTime;
         this.performanceMetrics.loadOperations++;
         this.performanceMetrics.totalPersistenceTime += duration;
-        
+
         console.log(`Successfully loaded ${tasks.length} tasks from localStorage in ${duration.toFixed(2)}ms`);
       }
     } catch (error) {
@@ -260,8 +260,8 @@ export class TaskService {
       throw new Error('Task not found');
     }
 
-    const targetOrder = newOrder !== undefined 
-      ? newOrder 
+    const targetOrder = newOrder !== undefined
+      ? newOrder
       : this.getNextOrder(newStatus);
 
     // If moving to a new status, reorder tasks in the target column
@@ -318,9 +318,9 @@ export class TaskService {
     // Update orders for tasks that need to be shifted
     tasksInColumn.forEach(task => {
       if (task.order >= insertOrder) {
-        this._tasks.update(tasks => 
-          tasks.map(t => 
-            t.id === task.id 
+        this._tasks.update(tasks =>
+          tasks.map(t =>
+            t.id === task.id
               ? { ...t, order: t.order + 1 }
               : t
           )
@@ -338,9 +338,9 @@ export class TaskService {
 
     tasksInColumn.forEach((task, index) => {
       if (task.order !== index) {
-        this._tasks.update(tasks => 
-          tasks.map(t => 
-            t.id === task.id 
+        this._tasks.update(tasks =>
+          tasks.map(t =>
+            t.id === task.id
               ? { ...t, order: index }
               : t
           )
@@ -379,7 +379,7 @@ export class TaskService {
    */
   batchUpdateTasks(updates: Array<{ id: string; updates: Partial<Omit<Task, 'id' | 'createdAt'>> }>): Task[] {
     const startTime = performance.now();
-    
+
     // Validate all tasks exist first
     const tasks = updates.map(update => {
       const task = this.getTask(update.id);
@@ -412,7 +412,7 @@ export class TaskService {
       // Apply all updates
       this._tasks.update(tasks => {
         const updatedTasks = [...tasks];
-        
+
         updates.forEach(update => {
           const taskIndex = updatedTasks.findIndex(t => t.id === update.id);
           if (taskIndex !== -1) {
@@ -424,7 +424,7 @@ export class TaskService {
             };
           }
         });
-        
+
         return updatedTasks;
       });
 
@@ -435,7 +435,7 @@ export class TaskService {
       const duration = performance.now() - startTime;
       this.performanceMetrics.batchOperations++;
       this.performanceMetrics.totalPersistenceTime += duration;
-      
+
       console.log(`Batch update of ${updates.length} tasks completed in ${duration.toFixed(2)}ms`);
 
       // Return updated tasks
@@ -460,7 +460,7 @@ export class TaskService {
     affectedTasks: Array<{ id: string; newOrder: number }>;
   }): { success: boolean; error?: string; duration?: number } {
     const startTime = performance.now();
-    
+
     try {
       const updates: Array<{ id: string; updates: Partial<Omit<Task, 'id' | 'createdAt'>> }> = [];
 
@@ -493,8 +493,8 @@ export class TaskService {
     } catch (error) {
       this.performanceMetrics.errors++;
       console.error('Drag and drop operation failed:', error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
         duration: performance.now() - startTime
       };
@@ -553,11 +553,11 @@ export class TaskService {
   repairTaskIntegrity(): boolean {
     try {
       const tasks = [...this._tasks()];
-      
+
       // Remove tasks with missing required data
-      const validTasks = tasks.filter(task => 
-        task.id && 
-        task.title && 
+      const validTasks = tasks.filter(task =>
+        task.id &&
+        task.title &&
         task.title.trim().length > 0 &&
         Object.values(TaskStatus).includes(task.status as TaskStatus)
       );
@@ -588,7 +588,7 @@ export class TaskService {
       const validation = this.validateTaskIntegrity();
       if (!validation.isValid) {
         console.warn('TaskService: Data integrity issues found on initialization:', validation.errors);
-        
+
         // Attempt automatic repair
         const repaired = this.repairTaskIntegrity();
         if (repaired) {
@@ -638,32 +638,40 @@ export class TaskService {
    * Gets comprehensive performance metrics
    */
   getPerformanceMetrics(): {
-    operations: typeof this.performanceMetrics;
+    operations: {
+      saveOperations: number;
+      loadOperations: number;
+      batchOperations: number;
+      dragDropOperations: number;
+      totalPersistenceTime: number;
+      lastOperationTime: number;
+      errors: number;
+    };
     averagePersistenceTime: number;
     operationsPerMinute: number;
     successRate: number;
     lastOperationAgo: number;
   } {
-    const totalOperations = this.performanceMetrics.saveOperations + 
-                           this.performanceMetrics.loadOperations + 
-                           this.performanceMetrics.batchOperations + 
+    const totalOperations = this.performanceMetrics.saveOperations +
+                           this.performanceMetrics.loadOperations +
+                           this.performanceMetrics.batchOperations +
                            this.performanceMetrics.dragDropOperations;
 
-    const averagePersistenceTime = totalOperations > 0 
-      ? this.performanceMetrics.totalPersistenceTime / totalOperations 
+    const averagePersistenceTime = totalOperations > 0
+      ? this.performanceMetrics.totalPersistenceTime / totalOperations
       : 0;
 
-    const successRate = totalOperations > 0 
-      ? ((totalOperations - this.performanceMetrics.errors) / totalOperations) * 100 
+    const successRate = totalOperations > 0
+      ? ((totalOperations - this.performanceMetrics.errors) / totalOperations) * 100
       : 100;
 
-    const lastOperationAgo = this.performanceMetrics.lastOperationTime > 0 
-      ? Date.now() - this.performanceMetrics.lastOperationTime 
+    const lastOperationAgo = this.performanceMetrics.lastOperationTime > 0
+      ? Date.now() - this.performanceMetrics.lastOperationTime
       : 0;
 
     // Estimate operations per minute (rough calculation)
-    const operationsPerMinute = totalOperations > 0 && lastOperationAgo > 0 
-      ? (totalOperations / (lastOperationAgo / 60000)) 
+    const operationsPerMinute = totalOperations > 0 && lastOperationAgo > 0
+      ? (totalOperations / (lastOperationAgo / 60000))
       : 0;
 
     return {
@@ -696,8 +704,8 @@ export class TaskService {
    */
   private getNextOrder(status: TaskStatusType): number {
     const tasksInStatus = this.getTasksByStatus(status);
-    return tasksInStatus.length > 0 
-      ? Math.max(...tasksInStatus.map(t => t.order)) + 1 
+    return tasksInStatus.length > 0
+      ? Math.max(...tasksInStatus.map(t => t.order)) + 1
       : 0;
   }
 }
