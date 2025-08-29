@@ -98,7 +98,13 @@
 /* Drag and Drop Styles */
 .task-item {
   cursor: grab;
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.task-item:hover:not(.cdk-drag-dragging) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .task-item:active {
@@ -113,43 +119,98 @@
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
+.task-item.cdk-drag-dragging {
+  opacity: 0.6;
+  transform: rotate(5deg);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
 .task-list.cdk-drop-list-dragging .task-item:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* Drag Preview */
+/* Enhanced Drag Preview */
 .drag-preview {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
   overflow: hidden;
-  max-width: 300px;
-  opacity: 0.9;
+  max-width: 320px;
+  opacity: 0.95;
+  transform: rotate(3deg);
+  animation: preview-float 0.5s ease-out;
+}
+
+@keyframes preview-float {
+  0% {
+    transform: rotate(0deg) scale(0.9);
+    opacity: 0.7;
+  }
+  100% {
+    transform: rotate(3deg) scale(1);
+    opacity: 0.95;
+  }
 }
 
 .preview-card {
-  background: white;
-  padding: 1rem;
-  border: 2px solid #007bff;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 1.25rem;
+  border: 3px solid #007bff;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+}
+
+.preview-status {
+  background: #007bff;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .preview-card h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #2c3e50;
+  line-height: 1.3;
 }
 
 .preview-card p {
-  margin: 0;
+  margin: 0 0 0.75rem 0;
   font-size: 0.875rem;
   color: #6c757d;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.preview-timestamp {
+  font-size: 0.75rem;
+  color: #adb5bd;
+  font-style: italic;
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 /* Drag Placeholder */
 .drag-placeholder {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
   border: 2px dashed #007bff;
   border-radius: 8px;
   min-height: 80px;
@@ -158,7 +219,19 @@
   justify-content: center;
   margin: 0.75rem 0;
   transition: all 0.2s ease;
-  opacity: 0.6;
+  opacity: 0.8;
+  animation: placeholder-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes placeholder-pulse {
+  0% {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+    border-color: #007bff;
+  }
+  100% {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+    border-color: #0056b3;
+  }
 }
 
 .placeholder-content {
@@ -166,24 +239,92 @@
   font-size: 0.875rem;
   font-weight: 500;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.placeholder-icon {
+  font-size: 1.2rem;
+  animation: bounce 1s ease-in-out infinite alternate;
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
 }
 
 /* Drop List States */
 .task-list.cdk-drop-list-receiving {
-  background-color: #e3f2fd;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+  border: 2px solid #007bff;
   border-radius: 8px;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 20px rgba(0, 123, 255, 0.1);
+  animation: pulse-drop-zone 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-drop-zone {
+  0% {
+    box-shadow: inset 0 0 20px rgba(0, 123, 255, 0.1), 0 0 0 0 rgba(0, 123, 255, 0.4);
+  }
+  100% {
+    box-shadow: inset 0 0 20px rgba(0, 123, 255, 0.2), 0 0 0 8px rgba(0, 123, 255, 0);
+  }
 }
 
 .column-content .cdk-drop-list {
   min-height: 100px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* Enhanced column highlighting during drag */
+.kanban-column {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.kanban-column.drag-over {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+  border: 2px solid #007bff;
+}
+
+.kanban-column.drag-over::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.1) 100%);
+  border-radius: 8px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Source column highlighting */
+.kanban-column.drag-source {
+  opacity: 0.7;
+  transform: scale(0.98);
+  transition: all 0.3s ease;
+}
+
+.kanban-column.drag-source .column-header {
+  background: linear-gradient(135deg, #fff3cd 0%, #fefefe 100%);
 }
 
 /* Hover effects during drag */
-.kanban-column:hover .task-list {
-  background-color: rgba(0, 123, 255, 0.05);
+.kanban-board.is-dragging .kanban-column:not(.drag-source):hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.15);
 }
 
 /* Active dragging state */
@@ -195,6 +336,116 @@
   z-index: 1001;
 }
 
+/* Drop Indicators and Enhanced Empty States */
+.drop-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 4rem;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  animation: drop-indicator-pulse 1.5s ease-in-out infinite alternate;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+@keyframes drop-indicator-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.5);
+  }
+}
+
+.drop-hint {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Enhanced Empty Drop Zone */
+.empty-drop-zone {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+  border: 3px dashed #007bff;
+  border-radius: 12px;
+  padding: 2rem 1rem;
+  text-align: center;
+  animation: empty-zone-breathe 2s ease-in-out infinite alternate;
+  transition: all 0.3s ease;
+}
+
+@keyframes empty-zone-breathe {
+  0% {
+    transform: scale(1);
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+  }
+  100% {
+    transform: scale(1.02);
+    background: linear-gradient(135deg, #f0f8ff 0%, #e8f4fd 100%);
+  }
+}
+
+.drop-zone-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  animation: icon-float 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes icon-float {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-5px);
+  }
+}
+
+.empty-drop-zone p {
+  margin: 0;
+  color: #007bff;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.empty-column.highlight-drop {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Column header animations during drag */
+.kanban-column.drag-over .column-header .column-title {
+  color: #007bff;
+  animation: title-glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes title-glow {
+  0% {
+    text-shadow: none;
+  }
+  100% {
+    text-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+  }
+}
+
+.kanban-column.drag-source .column-header .column-title {
+  color: #ffc107;
+  animation: source-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes source-pulse {
+  0% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .kanban-board {
     padding: 0.5rem;
@@ -202,6 +453,7 @@
   
   .column-header {
     padding: 0.75rem;
+    position: relative;
   }
   
   .column-description {
@@ -214,15 +466,70 @@
 
   /* Mobile drag and drop adjustments */
   .drag-preview {
-    max-width: 250px;
+    max-width: 280px;
+    transform: rotate(2deg);
   }
   
   .preview-card {
-    padding: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .preview-card h4 {
+    font-size: 1rem;
   }
   
   .drag-placeholder {
     min-height: 60px;
     margin: 0.5rem 0;
+  }
+
+  /* Mobile visual feedback adjustments */
+  .drop-indicator {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .empty-drop-zone {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .drop-zone-icon {
+    font-size: 1.5rem;
+  }
+
+  .empty-drop-zone p {
+    font-size: 0.9rem;
+  }
+
+  /* Reduce animation intensity on mobile */
+  .kanban-column.drag-over {
+    transform: scale(1.01);
+  }
+
+  .kanban-column.drag-source {
+    transform: scale(0.99);
+  }
+
+  /* Simplify animations for better mobile performance */
+  @keyframes drop-indicator-pulse {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.03);
+    }
+  }
+
+  @keyframes empty-zone-breathe {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.01);
+    }
   }
 }
