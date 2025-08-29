@@ -47,6 +47,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 type="text"
                 class="form-input"
                 [(ngModel)]="formData.title"
+                (input)="validateFormRealTime()"
                 name="title"
                 required
                 maxlength="128"
@@ -68,6 +69,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 id="task-description"
                 class="form-textarea"
                 [(ngModel)]="formData.description"
+                (input)="validateFormRealTime()"
                 name="description"
                 maxlength="256"
                 placeholder="Enter task description..."
@@ -374,6 +376,16 @@ export class TaskEditModalComponent {
       };
     }
     this.clearValidationErrors();
+  }
+
+  /**
+   * Validates the form in real-time as user types
+   */
+  validateFormRealTime(): void {
+    // Use a small timeout to debounce validation
+    setTimeout(() => {
+      this.isFormValid();
+    }, 50);
   }
 
   /**

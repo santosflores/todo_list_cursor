@@ -26,6 +26,7 @@ import { TaskEditModalComponent } from '../task-edit-modal/task-edit-modal.compo
 import { ConfirmationDialogComponent, ConfirmationDialogData } from '../confirmation-dialog/confirmation-dialog.component';
 import { TaskService } from '../../services/task.service';
 import { ToastService } from '../../services/toast.service';
+import { ErrorHandlerService } from '../../services/error-handler.service';
 import { Task } from '../../models/task.model';
 import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
 import { DragDropTestRunner } from './drag-drop-test-runner';
@@ -58,6 +59,7 @@ declare global {
 export class KanbanBoardComponent {
   private taskService = inject(TaskService);
   private toastService = inject(ToastService);
+  private errorHandler = inject(ErrorHandlerService);
   private elementRef = inject(ElementRef);
 
   // Visual feedback signals
@@ -184,6 +186,12 @@ export class KanbanBoardComponent {
    */
   onUpdateTask(event: { id: string; updates: Partial<Pick<Task, 'title' | 'description'>> }): void {
     try {
+      // Additional validation before updating
+      if (event.updates.title && !event.updates.title.trim()) {
+        this.toastService.showError('Task title cannot be empty');
+        return;
+      }
+      
       const updatedTask = this.taskService.updateTask(event.id, event.updates);
       
       // Show appropriate success message based on what was updated
@@ -197,8 +205,7 @@ export class KanbanBoardComponent {
         }
       }
     } catch (error) {
-      console.error('Failed to update task:', error);
-      this.toastService.showError('Failed to update task. Please try again.');
+      this.errorHandler.handleError(error, 'inline task update');
     }
   }
 
@@ -272,6 +279,11 @@ export class KanbanBoardComponent {
         this.toastService.showSuccess(`Task "${updatedTask.title}" updated successfully`);
       } else {
         // Creating new task
+        if (!event.updates.title?.trim()) {
+          this.toastService.showError('Task title is required');
+          return;
+        }
+        
         const newTask = this.taskService.createTask(
           event.updates.title!,
           event.updates.description
@@ -281,8 +293,7 @@ export class KanbanBoardComponent {
       
       this.closeEditModal();
     } catch (error) {
-      console.error('Failed to save task:', error);
-      this.toastService.showError('Failed to save task. Please try again.');
+      this.errorHandler.handleError(error, 'modal save');
     }
   }
 

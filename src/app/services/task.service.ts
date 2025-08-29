@@ -1,6 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Task } from '../models/task.model';
 import { TaskStatus, TaskStatusType } from '../models/task-status.model';
+import { ErrorHandlerService } from './error-handler.service';
 
 /**
  * Service for managing tasks with CRUD operations and localStorage persistence
@@ -13,6 +14,8 @@ export class TaskService {
   private readonly PERFORMANCE_KEY = 'daily-tasks-performance';
   private readonly VERSION_KEY = 'daily-tasks-version';
   private readonly CURRENT_VERSION = '1.0.0';
+  
+  private errorHandler = inject(ErrorHandlerService);
 
   // Signal for all tasks
   private _tasks = signal<Task[]>([]);
@@ -50,6 +53,16 @@ export class TaskService {
     this.handleDataMigration();
     this.loadTasks();
     this.validateAndRepairOnInit();
+    this.setupEventListeners();
+  }
+  
+  /**
+   * Sets up event listeners for error recovery actions
+   */
+  private setupEventListeners(): void {
+    window.addEventListener('cleanup-old-tasks', () => {
+      this.cleanupOldTasks();
+    });
   }
 
   /**
@@ -257,34 +270,30 @@ export class TaskService {
   }
 
   /**
-   * Creates a new task
+   * Creates a new task with enhanced validation
    */
   createTask(title: string, description?: string): Task {
-    if (!title.trim()) {
-      throw new Error('Task title is required');
+    try {
+      // Use error handler for consistent validation
+      this.errorHandler.validateTaskInput(title, description);
+
+      const newTask: Task = {
+        id: this.generateId(),
+        title: title.trim(),
+        description: description?.trim(),
+        status: TaskStatus.BACKLOG,
+        createdAt: new Date(),
+        order: this.getNextOrder(TaskStatus.BACKLOG)
+      };
+
+      this._tasks.update(tasks => [...tasks, newTask]);
+      this.saveTasks();
+
+      return newTask;
+    } catch (error) {
+      this.errorHandler.handleError(error, 'createTask', false);
+      throw error; // Re-throw for component handling
     }
-
-    if (title.length > 128) {
-      throw new Error('Task title cannot exceed 128 characters');
-    }
-
-    if (description && description.length > 256) {
-      throw new Error('Task description cannot exceed 256 characters');
-    }
-
-    const newTask: Task = {
-      id: this.generateId(),
-      title: title.trim(),
-      description: description?.trim(),
-      status: TaskStatus.BACKLOG,
-      createdAt: new Date(),
-      order: this.getNextOrder(TaskStatus.BACKLOG)
-    };
-
-    this._tasks.update(tasks => [...tasks, newTask]);
-    this.saveTasks();
-
-    return newTask;
   }
 
   /**
@@ -392,7 +401,7 @@ export class TaskService {
         }
       }
 
-      throw new Error('Failed to save tasks. Please check your browser storage settings.');
+      this.errorHandler.handleStorageError(error);
     }
   }
 
@@ -752,6 +761,54 @@ export class TaskService {
     });
 
     return { isValid: errors.length === 0, errors };
+  }
+
+  /**
+   * Reorders tasks in all columns to ensure consistent ordering
+   */
+  private reorderAllColumns(): void {
+    Object.values(TaskStatus).forEach(status => {
+      const tasksInColumn = this.getTasksByStatus(status);
+      tasksInColumn.forEach((task, index) => {
+        if (task.order !== index) {
+          this.updateTask(task.id, { order: index });
+        }
+      });
+    });
+  }
+
+  /**
+   * Cleans up completed tasks older than specified days
+   */
+  cleanupOldTasks(daysOld: number = 30): { removedCount: number; spaceSaved: number } {
+    try {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+      
+      const currentTasks = this._tasks();
+      const tasksToKeep = currentTasks.filter(task => {
+        // Keep task if it's not done, or if it's done but not old enough
+        return task.status !== TaskStatus.DONE || task.createdAt > cutoffDate;
+      });
+      
+      const removedCount = currentTasks.length - tasksToKeep.length;
+      const currentSize = JSON.stringify(currentTasks).length * 2; // UTF-16 encoding
+      const newSize = JSON.stringify(tasksToKeep).length * 2;
+      const spaceSaved = currentSize - newSize;
+      
+      if (removedCount > 0) {
+        this._tasks.set(tasksToKeep);
+        this.reorderAllColumns(); // Ensure proper ordering after cleanup
+        this.saveTasks();
+        
+        console.log(`Cleaned up ${removedCount} old completed tasks, saved ${spaceSaved} bytes`);
+      }
+      
+      return { removedCount, spaceSaved };
+    } catch (error) {
+      this.errorHandler.handleError(error, 'cleanupOldTasks');
+      return { removedCount: 0, spaceSaved: 0 };
+    }
   }
 
   /**

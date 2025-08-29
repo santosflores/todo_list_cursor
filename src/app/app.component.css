@@ -353,6 +353,23 @@
   color: #1a202c;
 }
 
+.label-with-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.label-with-counter label {
+  margin-bottom: 0;
+}
+
+.char-count {
+  font-size: 12px;
+  color: #888;
+  font-weight: normal;
+}
+
 .form-group input,
 .form-group textarea {
   width: 100%;

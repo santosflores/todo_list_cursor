@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { TaskService } from './services/task.service';
 import { ToastService } from './services/toast.service';
+import { ErrorHandlerService } from './services/error-handler.service';
 import { KanbanBoardComponent } from './components/kanban-board/kanban-board.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { Task } from './models/task.model';
@@ -21,6 +22,7 @@ export class AppComponent {
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
   private toastService = inject(ToastService);
+  private errorHandler = inject(ErrorHandlerService);
   
   // Form for creating new tasks
   taskForm: FormGroup;
@@ -61,14 +63,24 @@ export class AppComponent {
   createTask(): void {
     if (this.taskForm.valid) {
       const { title, description } = this.taskForm.value;
+      
+      // Additional client-side validation
+      if (!title?.trim()) {
+        this.toastService.showError('Task title is required');
+        return;
+      }
+      
       try {
         this.taskService.createTask(title, description);
         this.hideTaskForm();
         this.toastService.showSuccess(`Task "${title}" created successfully!`);
       } catch (error) {
-        console.error('Error creating task:', error);
-        this.toastService.showError('Failed to create task. Please try again.');
+        this.errorHandler.handleError(error, 'task creation');
       }
+    } else {
+      // Show validation errors if form is invalid
+      this.taskForm.markAllAsTouched();
+      this.toastService.showError('Please fix the validation errors before submitting');
     }
   }
   
