@@ -47,7 +47,7 @@ import { TaskStatusType } from '../../models/task-status.model';
                 id="task-title"
                 type="text"
                 class="form-input"
-                [ngModel]="formData.title"
+                [(ngModel)]="formData.title"
                 (input)="validateFormRealTime()"
                 name="title"
                 required
@@ -83,21 +83,19 @@ import { TaskStatusType } from '../../models/task-status.model';
               }
             </div>
 
-            @if (task()) {
-              <div class="form-group">
-                <label for="task-status" class="form-label">Status</label>
-                <select
-                  id="task-status"
-                  class="form-select"
-                  [(ngModel)]="formData.status"
-                  name="status"
-                >
-                  <option value="backlog">Backlog</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
-              </div>
-            }
+            <div class="form-group">
+              <label for="task-status" class="form-label">Status</label>
+              <select
+                id="task-status"
+                class="form-select"
+                [(ngModel)]="formData.status"
+                name="status"
+              >
+                <option value="backlog">Backlog</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
 
             <div class="form-actions">
               <button
