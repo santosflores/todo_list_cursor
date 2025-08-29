@@ -275,6 +275,30 @@ export class TaskService {
   }
 
   /**
+   * Updates task status (for drag and drop functionality)
+   */
+  updateTaskStatus(id: string, newStatus: TaskStatusType): Task {
+    const task = this.getTask(id);
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    return this.updateTask(id, { status: newStatus });
+  }
+
+  /**
+   * Updates task order (for drag and drop functionality)
+   */
+  updateTaskOrder(id: string, newOrder: number): Task {
+    const task = this.getTask(id);
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    return this.updateTask(id, { order: newOrder });
+  }
+
+  /**
    * Gets the next order number for a given status
    */
   private getNextOrder(status: TaskStatusType): number {

@@ -95,6 +95,106 @@
   }
 }
 
+/* Drag and Drop Styles */
+.task-item {
+  cursor: grab;
+  transition: transform 0.2s ease;
+}
+
+.task-item:active {
+  cursor: grabbing;
+}
+
+.task-item.cdk-drag-disabled {
+  cursor: default;
+}
+
+.task-item.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.task-list.cdk-drop-list-dragging .task-item:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Drag Preview */
+.drag-preview {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 300px;
+  opacity: 0.9;
+}
+
+.preview-card {
+  background: white;
+  padding: 1rem;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+}
+
+.preview-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.preview-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* Drag Placeholder */
+.drag-placeholder {
+  background: #f8f9fa;
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.75rem 0;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.placeholder-content {
+  color: #007bff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Drop List States */
+.task-list.cdk-drop-list-receiving {
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.column-content .cdk-drop-list {
+  min-height: 100px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+/* Hover effects during drag */
+.kanban-column:hover .task-list {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Active dragging state */
+.cdk-drag-animating {
+  z-index: 1000;
+}
+
+.cdk-drag-preview {
+  z-index: 1001;
+}
+
 @media (max-width: 768px) {
   .kanban-board {
     padding: 0.5rem;
@@ -110,5 +210,19 @@
   
   .column-content {
     padding: 0.75rem;
+  }
+
+  /* Mobile drag and drop adjustments */
+  .drag-preview {
+    max-width: 250px;
+  }
+  
+  .preview-card {
+    padding: 0.75rem;
+  }
+  
+  .drag-placeholder {
+    min-height: 60px;
+    margin: 0.5rem 0;
   }
 }

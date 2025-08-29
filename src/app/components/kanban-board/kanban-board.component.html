@@ -1,4 +1,4 @@
-<div class="kanban-board">
+<div class="kanban-board" cdkDropListGroup>
   <div class="kanban-columns">
     @for (column of columns; track column.id) {
       <div class="kanban-column">
@@ -9,16 +9,38 @@
         <p class="column-description">{{ column.description }}</p>
         
         <div class="column-content">
-          <div class="task-list">
+          <div 
+            class="task-list"
+            cdkDropList
+            [id]="getDropListId(column.id)"
+            [cdkDropListData]="getTasksForColumn(column.id)"
+            (cdkDropListDropped)="onDrop($event)">
             @if (getTasksForColumn(column.id).length === 0) {
               <div class="empty-column">
                 <p>No tasks in {{ column.title.toLowerCase() }}</p>
               </div>
             } @else {
               @for (task of getTasksForColumn(column.id); track task.id) {
-                <app-task-card 
-                  [task]="task"
-                  (deleteTask)="onDeleteTask($event)" />
+                <div cdkDrag class="task-item">
+                  <app-task-card 
+                    [task]="task"
+                    (deleteTask)="onDeleteTask($event)" />
+                  
+                  <!-- Custom drag preview -->
+                  <div *cdkDragPreview class="drag-preview">
+                    <div class="preview-card">
+                      <h4>{{ task.title }}</h4>
+                      @if (task.description) {
+                        <p>{{ task.description }}</p>
+                      }
+                    </div>
+                  </div>
+                  
+                  <!-- Drag placeholder -->
+                  <div *cdkDragPlaceholder class="drag-placeholder">
+                    <div class="placeholder-content">Drop task here</div>
+                  </div>
+                </div>
               }
             }
           </div>
