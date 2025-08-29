@@ -37,7 +37,10 @@
         <h2>Create New Task</h2>
         
         <div class="form-group">
-          <label for="title">Title *</label>
+          <div class="label-with-counter">
+            <label for="title">Title *</label>
+            <span class="char-count">{{ taskForm.get('title')?.value?.length || 0 }}/128</span>
+          </div>
           <input 
             id="title"
             type="text" 
@@ -51,7 +54,10 @@
         </div>
         
         <div class="form-group">
-          <label for="description">Description</label>
+          <div class="label-with-counter">
+            <label for="description">Description</label>
+            <span class="char-count">{{ taskForm.get('description')?.value?.length || 0 }}/256</span>
+          </div>
           <textarea 
             id="description"
             formControlName="description" 

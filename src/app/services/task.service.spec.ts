@@ -268,4 +268,128 @@ describe('TaskService', () => {
       expect(service.allTasks().length).toBe(3);
     });
   });
+
+  describe('Enhanced Validation and Error Handling', () => {
+    beforeEach(() => {
+      // Clear any existing tasks
+      localStorage.removeItem('daily-tasks');
+      service = new TaskService();
+    });
+
+    describe('validateTaskIntegrity', () => {
+      it('should detect empty titles', () => {
+        // Manually add invalid task to test validation
+        const invalidTask = {
+          id: '1',
+          title: '',
+          description: 'desc',
+          status: TaskStatus.BACKLOG,
+          createdAt: new Date(),
+          order: 0
+        };
+        
+        // Use private method access for testing
+        (service as any)._tasks.set([invalidTask]);
+        
+        const result = service.validateTaskIntegrity();
+        expect(result.isValid).toBe(false);
+        expect(result.errors).toContain('Task 1 has empty title');
+      });
+
+      it('should detect title length violations', () => {
+        const invalidTask = {
+          id: '1',
+          title: 'a'.repeat(129),
+          description: 'desc',
+          status: TaskStatus.BACKLOG,
+          createdAt: new Date(),
+          order: 0
+        };
+        
+        (service as any)._tasks.set([invalidTask]);
+        
+        const result = service.validateTaskIntegrity();
+        expect(result.isValid).toBe(false);
+        expect(result.errors).toContain('Task 1 title exceeds 128 characters');
+      });
+
+      it('should detect description length violations', () => {
+        const invalidTask = {
+          id: '1',
+          title: 'Valid Title',
+          description: 'a'.repeat(257),
+          status: TaskStatus.BACKLOG,
+          createdAt: new Date(),
+          order: 0
+        };
+        
+        (service as any)._tasks.set([invalidTask]);
+        
+        const result = service.validateTaskIntegrity();
+        expect(result.isValid).toBe(false);
+        expect(result.errors).toContain('Task 1 description exceeds 256 characters');
+      });
+
+      it('should pass validation for valid tasks', () => {
+        const task = service.createTask('Valid Title', 'Valid description');
+        
+        const result = service.validateTaskIntegrity();
+        expect(result.isValid).toBe(true);
+        expect(result.errors.length).toBe(0);
+      });
+    });
+
+    describe('cleanupOldTasks', () => {
+      it('should remove old completed tasks', () => {
+        // Create some tasks
+        const task1 = service.createTask('Task 1');
+        const task2 = service.createTask('Task 2');
+        
+        // Mark one as done and artificially make it old
+        service.updateTaskStatus(task1.id, TaskStatus.DONE);
+        
+        // Manually set an old date
+        const oldDate = new Date();
+        oldDate.setDate(oldDate.getDate() - 35);
+        
+        const tasks = (service as any)._tasks();
+        tasks[0].createdAt = oldDate;
+        (service as any)._tasks.set([...tasks]);
+        
+        const result = service.cleanupOldTasks(30);
+        
+        expect(result.removedCount).toBe(1);
+        expect(service.allTasks().length).toBe(1);
+        expect(service.allTasks()[0].id).toBe(task2.id);
+      });
+
+      it('should keep recent completed tasks', () => {
+        const task1 = service.createTask('Task 1');
+        service.updateTaskStatus(task1.id, TaskStatus.DONE);
+        
+        const result = service.cleanupOldTasks(30);
+        
+        expect(result.removedCount).toBe(0);
+        expect(service.allTasks().length).toBe(1);
+      });
+
+      it('should keep all non-completed tasks regardless of age', () => {
+        const task1 = service.createTask('Task 1');
+        const task2 = service.createTask('Task 2');
+        
+        // Make task1 old but keep it in backlog
+        const oldDate = new Date();
+        oldDate.setDate(oldDate.getDate() - 35);
+        
+        const tasks = (service as any)._tasks();
+        tasks[0].createdAt = oldDate;
+        (service as any)._tasks.set([...tasks]);
+        
+        const result = service.cleanupOldTasks(30);
+        
+        expect(result.removedCount).toBe(0);
+        expect(service.allTasks().length).toBe(2);
+      });
+    });
+  });
 });

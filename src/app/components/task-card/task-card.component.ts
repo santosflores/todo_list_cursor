@@ -16,17 +16,25 @@ import { Task } from '../../models/task.model';
       
       <div class="task-header">
         @if (isEditingTitle()) {
-          <input
-            #titleInput
-            type="text"
-            class="task-title-input"
-            [(ngModel)]="editedTitle"
-            (blur)="saveTitleEdit()"
-            (keydown.enter)="saveTitleEdit()"
-            (keydown.escape)="cancelTitleEdit()"
-            maxlength="128"
-            (click)="$event.stopPropagation()"
-          />
+          <div class="editing-container">
+            <input
+              #titleInput
+              type="text"
+              class="task-title-input"
+              [(ngModel)]="editedTitle"
+              (input)="validateTitleRealTime()"
+              (blur)="saveTitleEdit()"
+              (keydown.enter)="saveTitleEdit()"
+              (keydown.escape)="cancelTitleEdit()"
+              maxlength="128"
+              [class.error]="titleValidationError()"
+              (click)="$event.stopPropagation()"
+            />
+            @if (titleValidationError()) {
+              <div class="validation-error">{{ titleValidationError() }}</div>
+            }
+            <div class="char-counter" [class.warning]="editedTitle.length > 100" [class.error]="editedTitle.length > 128">{{ editedTitle.length }}/128</div>
+          </div>
         } @else {
           <h3 
             class="task-title clickable"
@@ -52,18 +60,26 @@ import { Task } from '../../models/task.model';
       </div>
       
       @if (isEditingDescription()) {
-        <textarea
-          #descriptionInput
-          class="task-description-input"
-          [(ngModel)]="editedDescription"
-          (blur)="saveDescriptionEdit()"
-          (keydown.escape)="cancelDescriptionEdit()"
-          (keydown.ctrl.enter)="saveDescriptionEdit()"
-          maxlength="256"
-          placeholder="Enter task description..."
-          rows="3"
-          (click)="$event.stopPropagation()"
-        ></textarea>
+        <div class="editing-container">
+          <textarea
+            #descriptionInput
+            class="task-description-input"
+            [(ngModel)]="editedDescription"
+            (input)="validateDescriptionRealTime()"
+            (blur)="saveDescriptionEdit()"
+            (keydown.escape)="cancelDescriptionEdit()"
+            (keydown.ctrl.enter)="saveDescriptionEdit()"
+            maxlength="256"
+            [class.error]="descriptionValidationError()"
+            placeholder="Enter task description..."
+            rows="3"
+            (click)="$event.stopPropagation()"
+          ></textarea>
+          @if (descriptionValidationError()) {
+            <div class="validation-error">{{ descriptionValidationError() }}</div>
+          }
+                      <div class="char-counter" [class.warning]="editedDescription.length > 200" [class.error]="editedDescription.length > 256">{{ editedDescription.length }}/256</div>
+        </div>
       } @else {
         @if (task().description) {
           <p 
@@ -404,6 +420,45 @@ import { Task } from '../../models/task.model';
     .task-footer:hover .task-status {
       transform: scale(1.05);
     }
+
+    .editing-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .validation-error {
+      color: #d32f2f;
+      font-size: 11px;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .char-counter {
+      color: #888;
+      font-size: 11px;
+      margin-top: 4px;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .char-counter.warning {
+      color: #ff9800;
+    }
+
+    .char-counter.error {
+      color: #d32f2f;
+    }
+
+    .task-title-input.error {
+      border-color: #d32f2f;
+      box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+    }
+
+    .task-description-input.error {
+      border-color: #d32f2f;
+      box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -421,6 +476,10 @@ export class TaskCardComponent {
   editedTitle = '';
   isEditingDescription = signal(false);
   editedDescription = '';
+  
+  // Validation error signals
+  titleValidationError = signal<string | null>(null);
+  descriptionValidationError = signal<string | null>(null);
 
   /**
    * Formats the creation date for display
@@ -467,10 +526,37 @@ export class TaskCardComponent {
   }
 
   /**
+   * Validates title in real-time as user types
+   */
+  validateTitleRealTime(): void {
+    const title = this.editedTitle.trim();
+    
+    if (!title) {
+      this.titleValidationError.set('Title is required');
+    } else if (title.length > 128) {
+      this.titleValidationError.set('Title cannot exceed 128 characters');
+    } else {
+      this.titleValidationError.set(null);
+    }
+  }
+
+  /**
+   * Validates description in real-time as user types
+   */
+  validateDescriptionRealTime(): void {
+    if (this.editedDescription.length > 256) {
+      this.descriptionValidationError.set('Description cannot exceed 256 characters');
+    } else {
+      this.descriptionValidationError.set(null);
+    }
+  }
+
+  /**
    * Starts editing the task title
    */
   startTitleEdit(): void {
     this.editedTitle = this.task().title;
+    this.titleValidationError.set(null);
     this.isEditingTitle.set(true);
     
     // Focus the input after the view updates
@@ -489,13 +575,23 @@ export class TaskCardComponent {
   saveTitleEdit(): void {
     const trimmedTitle = this.editedTitle.trim();
     
-    if (trimmedTitle && trimmedTitle !== this.task().title) {
-      if (trimmedTitle.length <= 128) {
-        this.updateTask.emit({
-          id: this.task().id,
-          updates: { title: trimmedTitle }
-        });
-      }
+    // Validate before saving
+    if (!trimmedTitle) {
+      this.titleValidationError.set('Title is required');
+      return; // Don't close the edit mode, let user fix the error
+    }
+    
+    if (trimmedTitle.length > 128) {
+      this.titleValidationError.set('Title cannot exceed 128 characters');
+      return; // Don't close the edit mode, let user fix the error
+    }
+    
+    // Only save if there's actually a change
+    if (trimmedTitle !== this.task().title) {
+      this.updateTask.emit({
+        id: this.task().id,
+        updates: { title: trimmedTitle }
+      });
     }
     
     this.cancelTitleEdit();
@@ -506,6 +602,7 @@ export class TaskCardComponent {
    */
   cancelTitleEdit(): void {
     this.isEditingTitle.set(false);
+    this.titleValidationError.set(null);
     this.editedTitle = '';
   }
 
@@ -514,6 +611,7 @@ export class TaskCardComponent {
    */
   startDescriptionEdit(): void {
     this.editedDescription = this.task().description || '';
+    this.descriptionValidationError.set(null);
     this.isEditingDescription.set(true);
     
     // Focus the textarea after the view updates
@@ -531,18 +629,23 @@ export class TaskCardComponent {
    */
   saveDescriptionEdit(): void {
     const trimmedDescription = this.editedDescription.trim();
+    
+    // Validate before saving
+    if (this.editedDescription.length > 256) {
+      this.descriptionValidationError.set('Description cannot exceed 256 characters');
+      return; // Don't close the edit mode, let user fix the error
+    }
+    
     const currentDescription = this.task().description || '';
     
-    // Check if description actually changed
+    // Only save if there's actually a change
     if (trimmedDescription !== currentDescription) {
-      if (trimmedDescription.length <= 256) {
-        // If description is empty, pass undefined to remove it
-        const descriptionValue = trimmedDescription || undefined;
-        this.updateTask.emit({
-          id: this.task().id,
-          updates: { description: descriptionValue }
-        });
-      }
+      // If description is empty, pass undefined to remove it
+      const descriptionValue = trimmedDescription || undefined;
+      this.updateTask.emit({
+        id: this.task().id,
+        updates: { description: descriptionValue }
+      });
     }
     
     this.cancelDescriptionEdit();
@@ -553,6 +656,7 @@ export class TaskCardComponent {
    */
   cancelDescriptionEdit(): void {
     this.isEditingDescription.set(false);
+    this.descriptionValidationError.set(null);
     this.editedDescription = '';
   }
 }
