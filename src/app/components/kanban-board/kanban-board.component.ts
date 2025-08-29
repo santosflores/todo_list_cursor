@@ -23,7 +23,9 @@ import {
 } from '@angular/cdk/drag-drop';
 import { TaskCardComponent } from '../task-card/task-card.component';
 import { TaskEditModalComponent } from '../task-edit-modal/task-edit-modal.component';
+import { ConfirmationDialogComponent, ConfirmationDialogData } from '../confirmation-dialog/confirmation-dialog.component';
 import { TaskService } from '../../services/task.service';
+import { ToastService } from '../../services/toast.service';
 import { Task } from '../../models/task.model';
 import { TaskStatus, TaskStatusType } from '../../models/task-status.model';
 import { DragDropTestRunner } from './drag-drop-test-runner';
@@ -42,6 +44,7 @@ declare global {
     CommonModule,
     TaskCardComponent,
     TaskEditModalComponent,
+    ConfirmationDialogComponent,
     CdkDropListGroup,
     CdkDropList,
     CdkDrag,
@@ -54,6 +57,7 @@ declare global {
 })
 export class KanbanBoardComponent {
   private taskService = inject(TaskService);
+  private toastService = inject(ToastService);
   private elementRef = inject(ElementRef);
 
   // Visual feedback signals
@@ -64,6 +68,11 @@ export class KanbanBoardComponent {
   // Modal state
   isModalOpen = signal(false);
   editingTask = signal<Task | null>(null);
+  
+  // Confirmation dialog state
+  isConfirmDialogOpen = signal(false);
+  confirmDialogData = signal<ConfirmationDialogData>({ title: '', message: '' });
+  pendingDeleteTaskId = signal<string | null>(null);
 
   // Test runner instance
   private testRunner: DragDropTestRunner;
@@ -157,20 +166,17 @@ export class KanbanBoardComponent {
       return;
     }
 
-    const confirmed = confirm(
-      `Are you sure you want to delete the task "${task.title}"?\n\nThis action cannot be undone.`
-    );
-
-    if (confirmed) {
-      const success = this.taskService.deleteTask(taskId);
-      if (success) {
-        // TODO: Show success toast notification
-        console.log('Task deleted successfully');
-      } else {
-        // TODO: Show error toast notification
-        console.error('Failed to delete task');
-      }
-    }
+    // Set up confirmation dialog
+    this.confirmDialogData.set({
+      title: 'Delete Task',
+      message: `Are you sure you want to delete "${task.title}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    
+    this.pendingDeleteTaskId.set(taskId);
+    this.isConfirmDialogOpen.set(true);
   }
 
   /**
@@ -179,14 +185,20 @@ export class KanbanBoardComponent {
   onUpdateTask(event: { id: string; updates: Partial<Pick<Task, 'title' | 'description'>> }): void {
     try {
       const updatedTask = this.taskService.updateTask(event.id, event.updates);
-      console.log('Task updated successfully:', updatedTask);
-      // TODO: Show success toast notification
+      
+      // Show appropriate success message based on what was updated
+      if (event.updates.title) {
+        this.toastService.showSuccess(`Task title updated to "${event.updates.title}"`);
+      } else if (event.updates.description !== undefined) {
+        if (event.updates.description) {
+          this.toastService.showSuccess('Task description updated successfully');
+        } else {
+          this.toastService.showSuccess('Task description removed');
+        }
+      }
     } catch (error) {
       console.error('Failed to update task:', error);
-      // TODO: Show error toast notification
-      if (error instanceof Error) {
-        alert(`Failed to update task: ${error.message}`);
-      }
+      this.toastService.showError('Failed to update task. Please try again.');
     }
   }
 
@@ -215,6 +227,41 @@ export class KanbanBoardComponent {
   }
 
   /**
+   * Handles confirmation dialog confirm action
+   */
+  onConfirmDialogConfirm(): void {
+    const taskId = this.pendingDeleteTaskId();
+    if (taskId) {
+      const task = this.taskService.getTask(taskId);
+      const success = this.taskService.deleteTask(taskId);
+      
+      if (success && task) {
+        this.toastService.showSuccess(`Task "${task.title}" deleted successfully`);
+      } else {
+        this.toastService.showError('Failed to delete task. Please try again.');
+      }
+    }
+    
+    this.closeConfirmDialog();
+  }
+
+  /**
+   * Handles confirmation dialog cancel action
+   */
+  onConfirmDialogCancel(): void {
+    this.closeConfirmDialog();
+  }
+
+  /**
+   * Closes the confirmation dialog and cleans up state
+   */
+  private closeConfirmDialog(): void {
+    this.isConfirmDialogOpen.set(false);
+    this.pendingDeleteTaskId.set(null);
+    this.confirmDialogData.set({ title: '', message: '' });
+  }
+
+  /**
    * Handles saving from the modal (both create and edit)
    */
   onModalSave(event: { task: Task | null; updates: Partial<Pick<Task, 'title' | 'description' | 'status'>> }): void {
@@ -222,25 +269,20 @@ export class KanbanBoardComponent {
       if (event.task) {
         // Editing existing task
         const updatedTask = this.taskService.updateTask(event.task.id, event.updates);
-        console.log('Task updated successfully:', updatedTask);
-        // TODO: Show success toast notification
+        this.toastService.showSuccess(`Task "${updatedTask.title}" updated successfully`);
       } else {
         // Creating new task
         const newTask = this.taskService.createTask(
           event.updates.title!,
           event.updates.description
         );
-        console.log('Task created successfully:', newTask);
-        // TODO: Show success toast notification
+        this.toastService.showSuccess(`Task "${newTask.title}" created successfully!`);
       }
       
       this.closeEditModal();
     } catch (error) {
       console.error('Failed to save task:', error);
-      // TODO: Show error toast notification
-      if (error instanceof Error) {
-        alert(`Failed to save task: ${error.message}`);
-      }
+      this.toastService.showError('Failed to save task. Please try again.');
     }
   }
 
@@ -391,23 +433,24 @@ export class KanbanBoardComponent {
   }
 
   /**
-   * Shows success message (placeholder for toast service integration)
+   * Shows success message to user
    */
   private showSuccessMessage(message: string): void {
     console.log('Success:', message);
-    // TODO: Integrate with ToastService when implemented
+    this.toastService.showSuccess(message);
   }
 
   /**
-   * Shows error message (placeholder for toast service integration)
+   * Shows error message to user
    */
   private showErrorMessage(message: string): void {
     console.error('Error:', message);
-    // TODO: Integrate with ToastService when implemented
-
-    // For now, show a simple alert for critical errors
+    
+    // Show critical errors with no auto-dismiss
     if (message.includes('Critical')) {
-      alert(message);
+      this.toastService.showError(message, 0);
+    } else {
+      this.toastService.showError(message, 8000); // 8 seconds for regular errors
     }
   }
 

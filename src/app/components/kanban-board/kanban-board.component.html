@@ -95,3 +95,11 @@
   (save)="onModalSave($event)"
   (cancel)="closeEditModal()"
 />
+
+<!-- Confirmation Dialog -->
+<app-confirmation-dialog
+  [isOpen]="isConfirmDialogOpen()"
+  [data]="confirmDialogData()"
+  (confirm)="onConfirmDialogConfirm()"
+  (cancel)="onConfirmDialogCancel()"
+/>
