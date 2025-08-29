@@ -163,7 +163,100 @@
   min-height: 640px;
 }
 
-/* Responsive Design */
+/* Desktop Responsive Design */
+
+/* Large Desktop (1440px+) - Optimal viewing experience */
+@media (min-width: 1440px) {
+  .app-container {
+    max-width: 1600px;
+    padding: 32px;
+  }
+  
+  .app-header {
+    padding: 28px 40px;
+    margin-bottom: 40px;
+  }
+  
+  .app-header h1 {
+    font-size: 3rem;
+  }
+  
+  .task-form-container {
+    padding: 40px;
+    margin-bottom: 40px;
+  }
+  
+  .kanban-container {
+    padding: 40px;
+    min-height: 700px;
+  }
+}
+
+/* Standard Desktop (1200px - 1439px) */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .app-container {
+    max-width: 1400px;
+    padding: 28px;
+  }
+  
+  .app-header {
+    padding: 26px 36px;
+    margin-bottom: 36px;
+  }
+  
+  .task-form-container {
+    padding: 36px;
+    margin-bottom: 36px;
+  }
+  
+  .kanban-container {
+    padding: 36px;
+    min-height: 660px;
+  }
+}
+
+/* Medium Desktop (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .app-container {
+    max-width: 1200px;
+    padding: 24px;
+  }
+  
+  .app-header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .kanban-container {
+    min-height: 620px;
+  }
+}
+
+/* Tablet/Small Desktop (769px - 991px) */
+@media (min-width: 769px) and (max-width: 991px) {
+  .app-container {
+    padding: 20px;
+  }
+  
+  .app-header {
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+  
+  .app-header h1 {
+    font-size: 2.25rem;
+  }
+  
+  .task-form-container {
+    padding: 28px;
+  }
+  
+  .kanban-container {
+    padding: 28px;
+    min-height: 580px;
+  }
+}
+
+/* Mobile and smaller screens */
 @media (max-width: 768px) {
   .app-container {
     padding: 15px;
@@ -173,6 +266,7 @@
     flex-direction: column;
     gap: 15px;
     text-align: center;
+    padding: 20px;
   }
 
   .app-header h1 {
